@@ -1,0 +1,92 @@
+models:
+  - name: dtm_d2c_product_sales_it_esp
+    description: "One row per day, export market and SKU, with the quantity sold and the revenue before taxes, for the Italy and Spain markets. Kits are exploded into their component SKUs upstream in primary_d2c_order…"
+    meta:
+      metrics:
+        total_qty_items:
+          type: sum
+          label: "Total Quantity Sold"
+          description: "Sum of Qty items"
+        total_amt_bt_product_revenue_eur:
+          type: sum
+          label: "Total Product Revenue BT"
+          description: "Sum of Amt bt product revenue eur"
+    columns:
+      - name: sku
+        label: "Sku"
+        description: "Unique code of the product or kit."
+        meta:
+          dimension:
+            type: string
+      - name: dt_day
+        label: "Dt day"
+        description: "Order creation date of the line items aggregated in this row."
+        meta:
+          dimension:
+            type: date
+      - name: dt_day_day
+        label: "Dt day day"
+        description: "Order creation date of the line items aggregated in this row."
+        meta:
+          dimension:
+            type: date
+      - name: dt_day_week
+        label: "Dt day week"
+        description: "Order creation date of the line items aggregated in this row."
+        meta:
+          dimension:
+            type: date
+      - name: dt_day_year
+        label: "Dt day year"
+        description: "Order creation date of the line items aggregated in this row."
+        meta:
+          dimension:
+            type: date
+      - name: dt_day_month
+        label: "Dt day month"
+        description: "Order creation date of the line items aggregated in this row."
+        meta:
+          dimension:
+            type: date
+      - name: name_product
+        label: "Name product"
+        description: "Text description of the product."
+        meta:
+          dimension:
+            type: string
+      - name: rayon_product
+        label: "Rayon product"
+        description: "Product merchandising department."
+        meta:
+          dimension:
+            type: string
+      - name: dt_day_quarter
+        label: "Dt day quarter"
+        description: "Order creation date of the line items aggregated in this row."
+        meta:
+          dimension:
+            type: date
+      - name: category_product
+        label: "Category product"
+        description: "Main product category."
+        meta:
+          dimension:
+            type: string
+      - name: categ_range_product
+        label: "Categ range product"
+        description: "Product range, built as category_product and subcategory_product joined by an underscore, following the same convention as the B2B priority ranges."
+        meta:
+          dimension:
+            type: string
+      - name: subcategory_product
+        label: "Subcategory product"
+        description: "Product subcategory."
+        meta:
+          dimension:
+            type: string
+      - name: agg_country_shipping
+        label: "Agg country shipping"
+        description: "Export market the order was shipped to, from the order's shipping address. Chosen over the customer country because it is stable once the order is placed and matches how marketing spend is attributed…"
+        meta:
+          dimension:
+            type: string

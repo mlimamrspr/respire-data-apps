@@ -1,0 +1,154 @@
+models:
+  - name: dtm_d2c_spend_it_esp
+    description: "Daily marketing spend fact table for the Italy and Spain export markets, combining Meta Ads and Influence costs. "
+    meta:
+      metrics:
+        cac:
+          type: number
+          label: "CAC"
+          description: "Customer acquisition cost: total marketing spend, Meta and Influence combined, divided by the number of new customers from Shopify."
+        cos:
+          type: number
+          label: "COS"
+          description: "Cost of sale: total marketing spend, Meta and Influence combined, divided by order revenue."
+        cpa:
+          type: number
+          label: "CPA"
+          description: "Cost per acquisition as seen by Meta: Meta spend divided by pixel conversions (7d click attribution). Not the same as CAC, which counts new customers from Shopify."
+        cpc:
+          type: number
+          label: "CPC"
+          description: "Cost per click: Meta spend divided by all ad clicks, not only link clicks."
+        cpm:
+          type: number
+          label: "CPM"
+          description: "Cost per mille: Meta spend per thousand impressions."
+        cac_meta:
+          type: number
+          label: "CAC (Meta)"
+          description: "Customer acquisition cost on the Meta perimeter only: Meta marketing spend divided by the number of new customers from Shopify. Differs from CAC only on days carrying influence spend."
+        cos_meta:
+          type: number
+          label: "COS (Meta)"
+          description: "Cost of sale on the Meta perimeter only: Meta marketing spend divided by order revenue. This is the COS the Pilotage GG sheet shows. It differs from COS only on days carrying influence spend."
+        influence_cac:
+          type: number
+          label: "CAC (Influence)"
+          description: "Influence spend divided by the number of first-time customers attributed by discount code."
+        cost_per_order:
+          type: number
+          label: "Cost per Order"
+          description: "Total marketing spend, Meta and Influence combined, divided by the number of orders. This is the metric historically labelled \"CAC\" in the Pilotage GG sheet, kept under its accurate name for reading …"
+        influence_roas:
+          type: number
+          label: "ROAS (Influence)"
+          description: "Return on ad spend for influence: revenue attributed by discount code, before taxes, divided by influence spend excluding brand costs. Not comparable with a Meta ROAS, which is pixel-attributed and a…"
+        attributed_roas:
+          type: number
+          label: "Attributed ROAS"
+          description: "Return on ad spend as the platform reports it: revenue Meta attributes to its own ads divided by Meta spend. Both sides are the platform's own view, after taxes and on a 7 day click window, so this i…"
+        total_qty_clicks:
+          type: sum_distinct
+          label: "Total Meta Clicks"
+          description: "Sum distinct of Qty clicks"
+        cost_per_order_meta:
+          type: number
+          label: "Cost per Order (Meta)"
+          description: "Meta marketing spend divided by the number of orders. This is the exact counterpart of the metric labelled \"CAC\" in the Pilotage GG sheet, which counts Meta spend alone — use this one to reconcile ag…"
+        total_amt_spend_eur:
+          type: sum_distinct
+          label: "Total Marketing Spend"
+          description: "Sum distinct of Amt spend eur"
+        total_qty_conversions:
+          type: sum_distinct
+          label: "Total Meta Conversions"
+          description: "Sum distinct of Qty conversions"
+        total_qty_impressions:
+          type: sum_distinct
+          label: "Total Meta Impressions"
+          description: "Sum distinct of Qty impressions"
+        influence_cost_per_order:
+          type: number
+          label: "Cost per Order (Influence)"
+          description: "Influence spend divided by the number of orders attributed by discount code."
+        total_qty_influence_orders:
+          type: sum_distinct
+          label: "Total Influence Orders"
+          description: "Sum distinct of Qty influence orders"
+        total_amt_conversion_value_eur:
+          type: sum_distinct
+          label: "Total Meta Attributed Revenue"
+          description: "Sum distinct of Amt conversion value eur"
+        total_qty_influence_new_customers:
+          type: sum_distinct
+          label: "Total Influence New Customers"
+          description: "Sum distinct of Qty influence new customers"
+        total_amt_bt_influence_revenue_eur:
+          type: sum_distinct
+          label: "Total Influence Attributed Revenue"
+          description: "Sum distinct of Amt bt influence revenue eur"
+      joins:
+        - join: dtm_d2c_orders_it_esp
+          relationship: many-to-many
+          sql_on: "${dtm_d2c_orders_it_esp.agg_country_shipping} = ${dtm_d2c_spend_it_esp.country} AND ${dtm_d2c_orders_it_esp.dt_created} = ${dtm_d2c_spend_it_esp.dt_day}"
+    columns:
+      - name: dt_day
+        label: "Dt day"
+        description: "Date of the marketing spend record."
+        meta:
+          dimension:
+            type: date
+      - name: country
+        label: "Country"
+        description: "Export market the marketing spend is attributed to (Spain or Italy)."
+        meta:
+          dimension:
+            type: string
+      - name: dt_day_day
+        label: "Dt day day"
+        description: "Date of the marketing spend record."
+        meta:
+          dimension:
+            type: date
+      - name: dt_day_week
+        label: "Dt day week"
+        description: "Date of the marketing spend record."
+        meta:
+          dimension:
+            type: date
+      - name: dt_day_year
+        label: "Dt day year"
+        description: "Date of the marketing spend record."
+        meta:
+          dimension:
+            type: date
+      - name: label_total
+        label: "Label total"
+        description: "Constant \"Total\" value. Group a single-number tile by it to cover the whole filtered period in one row: a query combining two or more sum_distinct metrics with no dimension at all fails to compile, a…"
+        meta:
+          dimension:
+            type: string
+      - name: dt_day_month
+        label: "Dt day month"
+        description: "Date of the marketing spend record."
+        meta:
+          dimension:
+            type: date
+      - name: source_spend
+        label: "Source spend"
+        description: "Marketing spend source (Meta or Influence)."
+        meta:
+          dimension:
+            type: string
+      - name: amt_spend_eur
+        label: "Amt spend eur"
+        description: "Marketing spend amount in euros."
+        meta:
+          dimension:
+            type: number
+      - name: dt_day_quarter
+        label: "Dt day quarter"
+        description: "Date of the marketing spend record."
+        meta:
+          dimension:
+            type: date

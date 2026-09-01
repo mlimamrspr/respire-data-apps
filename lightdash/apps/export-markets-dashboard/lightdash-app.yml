@@ -1,0 +1,9 @@
+codeVersion: 1
+projectUuid: 78b99966-80cd-4b28-a060-91ab1a46b5d7
+slug: export-markets-dashboard
+version: 1
+name: Export Markets Dashboard
+description: Daily performance for the Italy and Spain export markets.
+template: null
+downloadedAt: 2026-09-01T09:54:07.222Z
+scaffoldingVersion: 1.187.0

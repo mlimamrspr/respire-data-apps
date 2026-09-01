@@ -1,0 +1,96 @@
+models:
+  - name: dtm_d2c_orders_it_esp
+    description: "One row per order for the Italy and Spain export markets, with revenue and new-vs-returning / influence attribution flags. "
+    meta:
+      metrics:
+        aov:
+          type: number
+          label: "AOV"
+          description: "Average order value: order revenue divided by the number of orders."
+        nb_distinct_orders:
+          type: count_distinct
+          label: "Orders"
+          description: "Count distinct of Id order"
+        total_amt_bt_revenue_eur:
+          type: sum_distinct
+          label: "Total Revenue BT"
+          description: "Sum distinct of Amt bt revenue eur"
+        nb_distinct_new_customers:
+          type: count_distinct
+          label: "New Customers"
+          description: "Count distinct of Id customer"
+        pct_revenue_skincare_suncare:
+          type: number
+          label: "% Revenue Skincare Suncare"
+          description: "Share of revenue coming from Skincare or Suncare line items, out of total revenue."
+        total_amt_bt_skincare_suncare_eur:
+          type: sum_distinct
+          label: "Total Skincare + Suncare Revenue BT"
+          description: "Sum distinct of Amt bt skincare suncare eur"
+    columns:
+      - name: dt_created
+        label: "Dt created"
+        description: "Order creation date."
+        meta:
+          dimension:
+            type: date
+      - name: is_influence
+        label: "Is influence"
+        description: "Indicates whether the order is attributed to an influence campaign."
+        meta:
+          dimension:
+            type: boolean
+      - name: is_returning
+        label: "Is returning"
+        description: "Indicates whether the customer was new or returning at the time of the order."
+        meta:
+          dimension:
+            type: boolean
+      - name: dt_created_day
+        label: "Dt created day"
+        description: "Order creation date."
+        meta:
+          dimension:
+            type: date
+      - name: dt_created_week
+        label: "Dt created week"
+        description: "Order creation date."
+        meta:
+          dimension:
+            type: date
+      - name: dt_created_year
+        label: "Dt created year"
+        description: "Order creation date."
+        meta:
+          dimension:
+            type: date
+      - name: dt_created_month
+        label: "Dt created month"
+        description: "Order creation date."
+        meta:
+          dimension:
+            type: date
+      - name: amt_bt_revenue_eur
+        label: "Amt bt revenue eur"
+        description: "Total order amount after discounts and shipping, before taxes, in EUR."
+        meta:
+          dimension:
+            type: number
+      - name: dt_created_quarter
+        label: "Dt created quarter"
+        description: "Order creation date."
+        meta:
+          dimension:
+            type: date
+      - name: agg_country_shipping
+        label: "Agg country shipping"
+        description: "Export market the order was shipped to, from the order's shipping address. Chosen over the customer country because it is stable once the order is placed and matches how marketing spend is attributed…"
+        meta:
+          dimension:
+            type: string
+      - name: amt_bt_skincare_suncare_eur
+        label: "Amt bt skincare suncare eur"
+        description: "Order revenue before taxes coming from Skincare or Suncare line items."
+        meta:
+          dimension:
+            type: number

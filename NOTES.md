@@ -1,6 +1,6 @@
-# Export Markets Dashboard — data app (v3)
+# Export Markets Dashboard — data app (v9)
 
-Source de la **v3** publiée le 2026-09-01 dans la preview Lightdash `goGlobal-app`.
+Source de la **v9** publiée le 2026-09-01 dans la preview Lightdash `goGlobal-app`.
 
 - App : https://app.lightdash.cloud/projects/78b99966-80cd-4b28-a060-91ab1a46b5d7/apps/742176ad-2c3f-4ec4-b551-b7941f7feff4
 - Preview : `goGlobal-app` — créée avec `lightdash start-preview --name goGlobal-app --select tag:go_global --ignore-errors`
@@ -58,3 +58,25 @@ COS, CAC, CPM, CPC, CPA et ROAS elle-même, **après** avoir agrégé au grain a
 - Boutons d'export CSV/XLSX (contrôle dédié du SDK)
 - `lineage` à répandre sur les blocs pour activer « Inspect data »
 - Confronter les chiffres affichés à BigQuery, comme cela a été fait pour le dashboard
+
+## Prévisualiser en local
+
+```bash
+cd ~/Desktop/respire-data-apps/lightdash/apps/export-markets-dashboard
+npm install                                          # une seule fois
+lightdash apps preview --project 78b99966-80cd-4b28-a060-91ab1a46b5d7
+```
+
+Ouvrir l'URL que Vite affiche. Les modifications de `src/` se rechargent à chaud.
+
+⚠️ **Toujours passer `--project`.** Sans lui, le proxy se branche sur le projet de ta config de
+login — la **production** — qui ne contient ni les nouveaux explores ni les nouvelles metrics de
+la branche `goGlobal`. Les requêtes échoueraient ou renverraient autre chose.
+
+La clé d'API ne va jamais dans le navigateur : le CLI ouvre un proxy loopback qui la détient,
+n'autorise que les routes SDK d'une app déployée, et épingle le trafic à un seul projet.
+Un `npm run dev` nu n'a donc aucun accès aux données.
+
+Non émulé en local : les connexions externes, l'export Google Sheets, l'inspecteur réseau,
+et l'état d'URL. La preview tourne aussi avec **tes** permissions — un lecteur du déploiement
+peut voir autre chose.

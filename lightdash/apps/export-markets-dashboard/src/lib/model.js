@@ -21,9 +21,61 @@ export const F = {
 // rows with the exact string it was handed (qualifiedToShort in apiTransport). So the id used
 // to ASK for a field and the id used to READ it back must be identical, and the dotted form is
 // the only one that survives both.
-export const PAL = ['#7162FF', '#1F9E8F', '#E4645A', '#F2B138', '#5C7CFA', '#9B6BD6'];
-export const C = { ink:'#1A1B22', mid:'#66687A', faint:'#9A9CAB', grid:'#EDEEF2',
-                   line:'#E4E5EA', bg:'#F7F8FA', soft:'#F1EFFF' };
+// ─────────────────────────────────────────────────────────────────────────────
+// TYPOGRAPHY — change the font for the whole app here, nowhere else.
+// The sandbox blocks external stylesheets and font CDNs (Google Fonts included), so a
+// webfont cannot be loaded: only fonts already on the viewer's machine will render. The
+// stack below is deliberately system-only, which is why it never needs a network request.
+// ─────────────────────────────────────────────────────────────────────────────
+export const TYPE = {
+  family: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+  // Figures are set with tabular numerals so columns of numbers line up when they change.
+  numeric: 'tabular-nums',
+  // The size scale actually in use, smallest to largest. Kept here as documentation: the
+  // JSX writes them as Tailwind arbitrary values (text-[12px]) because Tailwind cannot read
+  // a runtime constant. If you change one, change every occurrence of that same size.
+  size: {
+    legend: 11,    // chart legends, KPI deltas
+    label: 11.5,   // KPI labels, axis-adjacent captions
+    body: 12,      // table cells, popover text, chips
+    lead: 12.5,    // page subtitle, popover titles
+    tile: 13,      // tile titles, tab labels
+    page: 17,      // page title
+    figure: 26,    // KPI value
+  },
+};
+
+// Respire theme. Every hue below is one of the 20 brand colours; the only additions are
+// alpha variants of the ink and the accent, used for text hierarchy and fills — the palette
+// has no greys, and a chart with no tonal range is unreadable.
+export const T = {
+  sand:   '#f2ebe7', ink:    '#18140f', black:  '#000000', gold:   '#e1b85c',
+  olive:  '#5e5800', brick:  '#8b3625', lime:   '#b7c86c', forest: '#2d641b',
+  brown:  '#804400', mint:   '#81d496', pine:   '#00684e', moss:   '#655500',
+  turq:   '#4dd7c6', teal:   '#00646f', leaf:   '#3b6209', cyan:   '#4ed0f0',
+  navy:   '#005c8f', green:  '#006944', sky:    '#80c3ff', indigo: '#3e4e97',
+  white: '#ffffff'
+};
+
+// Categorical series order, picked for separation rather than for the order they were given.
+export const PAL = [T.indigo, T.pine, T.brick, T.gold, T.navy, T.brown, T.turq, T.lime];
+
+export const C = {
+  bg: T.sand, surface: T.white, ink: T.ink,
+  mid:   'rgba(24,20,15,.68)',
+  faint: 'rgba(24,20,15,.46)',
+  line:  'rgba(24,20,15,.15)',
+  grid:  'rgba(24,20,15,.09)',
+  accent: T.indigo,
+  soft:  'rgba(62,78,151,.13)',
+  softer:'rgba(62,78,151,.07)',
+  // A raw, noisy series sits behind its rolling line and must not compete with it.
+  muted: 'rgba(24,20,15,.30)',
+  onGold: T.brown,
+  // Single-hue scale for a share column. A range, never a red/green rule: a large share is
+  // not a verdict, and the palette carries no "bad" colour on purpose.
+  scale: (t) => `rgba(62,78,151,${Math.min(0.85, t).toFixed(2)})`,
+};
 
 // Ratios are derived here, never queried. Re-deriving from additive components at the
 // displayed grain is the only way a ratio stays correct when days are rolled into weeks:
@@ -57,6 +109,23 @@ export function labelOf(iso, grain) {
   const d = new Date(iso + 'T00:00:00Z');
   if (grain === 'month') return M[d.getUTCMonth()] + " '" + String(d.getUTCFullYear()).slice(2);
   return d.getUTCDate() + ' ' + M[d.getUTCMonth()];
+}
+
+// A rolling window over ratios cannot be a mean of ratios. Averaging seven daily COS values
+// weights a quiet Sunday like a heavy Tuesday; the honest figure is the COS of the whole week,
+// which means summing the components first and dividing once — exactly what derive() does at
+// the period level. So: sum the additive columns across the window, derive the ratios from
+// that sum, and only then replace the additive columns with their per-period mean.
+export function rollingWindows(rows, k) {
+  return rows.map((_, i) => {
+    const win = rows.slice(Math.max(0, i - k + 1), i + 1);
+    const sum = blank();
+    win.forEach(r => ADD.forEach(a => { sum[a] += r[a] || 0; }));
+    const out = derive(sum);              // ratios: true value over the whole window
+    ADD.forEach(a => { out[a] = sum[a] / win.length; });  // additive: mean per period
+    out.n = win.length;
+    return out;
+  });
 }
 
 export function rolling(vals, k) {

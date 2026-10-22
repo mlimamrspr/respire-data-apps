@@ -1,0 +1,108 @@
+models:
+  - name: primary_b2b_pharma_hq_objectives
+    description: "Monthly pharma objectives of the headquarters view, one row per month and sales team (Terrain or IS), from the \"objectifs pharma siège\" sheet maintained by the B2B team. Unlike primary_b2b_pharma_obj…"
+    meta:
+      metrics:
+        pct_obj_turnover_skin:
+          type: number
+          label: "Percentage Objective Turnover Skin"
+          description: "Objective share of the Skincare and Suncare shelves in the turnover: skin turnover objective over turnover objective, both summed over the selected months and sales teams. "
+        total_count_obj_preorders:
+          type: sum
+          label: "Total Preorders Objective"
+          description: "Sum of the monthly objectives. Only meaningful for whole months."
+        total_count_obj_deo_openings:
+          type: sum
+          label: "Total Deo Openings Objective"
+          description: "Sum of the monthly objectives. Only meaningful for whole months."
+        total_amt_obj_turnover_bt_eur:
+          type: sum
+          label: "Total Turnover Objective BT"
+          description: "Sum of the monthly turnover objectives excluding VAT. Only meaningful for whole months: a date filter shorter than a month still returns the full month objective."
+        total_count_obj_repeat_orders:
+          type: sum
+          label: "Total Repeat Orders Objective"
+          description: "Sum of the monthly objectives. Only meaningful for whole months."
+        total_count_obj_skin_openings:
+          type: sum
+          label: "Total Skin Openings Objective"
+          description: "Sum of the monthly objectives. Only meaningful for whole months."
+        total_count_obj_new_skin_doors:
+          type: number
+          label: "Total New Skin Doors Objective"
+          description: "Skin openings objective plus deo to skin conversions objective, summed over the selected months and sales teams."
+        total_count_obj_opening_orders:
+          type: sum
+          label: "Total Opening Orders Objective"
+          description: "Sum of the monthly objectives. Only meaningful for whole months."
+        max_amt_obj_aov_preorders_bt_eur:
+          type: max
+          label: "Maximal AOV Preorders Objective BT"
+          description: "Highest monthly AOV objective of the selected months: the sheet repeats the same value on the IS and Terrain rows of a month, so read it on a single month."
+        total_count_obj_active_pharmacies:
+          type: sum
+          label: "Total Active Pharmacies Objective"
+          description: "Sum of the sales teams' park objectives. A park level: read it on a single month, summing several months is meaningless."
+        total_amt_obj_turnover_skin_bt_eur:
+          type: sum
+          label: "Total Turnover Skin Objective BT"
+          description: "Sum of the monthly turnover objectives excluding VAT of the Skincare and Suncare shelves. Only meaningful for whole months: a date filter shorter than a month still returns the full month objective."
+        max_amt_obj_aov_repeat_orders_bt_eur:
+          type: max
+          label: "Maximal AOV Repeat Orders Objective BT"
+          description: "Highest monthly AOV objective of the selected months: the sheet repeats the same value on the IS and Terrain rows of a month, so read it on a single month."
+        max_amt_obj_aov_opening_orders_bt_eur:
+          type: max
+          label: "Maximal AOV Opening Orders Objective BT"
+          description: "Highest monthly AOV objective of the selected months: the sheet repeats the same value on the IS and Terrain rows of a month, so read it on a single month."
+        total_count_obj_active_skin_pharmacies:
+          type: sum
+          label: "Total Active Skin Pharmacies Objective"
+          description: "Sum of the sales teams' skin park objectives. A park level: read it on a single month, summing several months is meaningless."
+        total_amt_obj_turnover_preorders_bt_eur:
+          type: sum
+          label: "Total Turnover Preorders Objective BT"
+          description: "Sum of the monthly turnover objectives excluding VAT. Only meaningful for whole months."
+        total_count_obj_deo_to_skin_conversions:
+          type: sum
+          label: "Total Deo To Skin Conversions Objective"
+          description: "Sum of the monthly objectives. Only meaningful for whole months."
+        total_amt_obj_turnover_repeat_orders_bt_eur:
+          type: sum
+          label: "Total Turnover Repeat Orders Objective BT"
+          description: "Sum of the monthly turnover objectives excluding VAT. Only meaningful for whole months."
+        total_amt_obj_turnover_opening_orders_bt_eur:
+          type: sum
+          label: "Total Turnover Opening Orders Objective BT"
+          description: "Sum of the monthly turnover objectives excluding VAT. Only meaningful for whole months."
+    columns:
+      - name: dt_month
+        label: "Date Month"
+        description: "First day of the month the objective applies to."
+        meta:
+          dimension:
+            type: date
+      - name: dt_month_year
+        label: "Date Month year"
+        description: "First day of the month the objective applies to."
+        meta:
+          dimension:
+            type: date
+      - name: dt_month_month
+        label: "Date Month month"
+        description: "First day of the month the objective applies to."
+        meta:
+          dimension:
+            type: date
+      - name: type_sales_team
+        label: "Type Sales Team"
+        description: "Pharma sales team: 'Terrain' (field sales reps) or 'IS' (Inside Sales)."
+        meta:
+          dimension:
+            type: string
+      - name: dt_month_quarter
+        label: "Date Month quarter"
+        description: "First day of the month the objective applies to."
+        meta:
+          dimension:
+            type: date

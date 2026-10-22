@@ -1,0 +1,13 @@
+parameters:
+  granularity_product_selector:
+    label: "Product Granularity Selector"
+    description: "Granularity of the product dimension. Lets a single chart switch between different levels of product aggregation without being rebuilt."
+    type: string
+    options: ["Product Name", "Product Category", "Product Subcategory", "Product Rayon", "Product Category L4"]
+    default: "Product Category"
+  volume_value_selector:
+    label: "Volume/Value Selector"
+    description: "Lets a single chart switch between volume and value metrics without being rebuilt."
+    type: string
+    options: ["Orders", "Quantity Ordered", "Turnover BT"]
+    default: "Orders"

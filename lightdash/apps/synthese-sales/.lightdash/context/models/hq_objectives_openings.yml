@@ -1,0 +1,17 @@
+models:
+  - name: hq_objectives_openings
+    description: "Monthly pharma objectives of the headquarters view, one row per month and sales team (Terrain or IS), from the \"objectifs pharma siège\" sheet maintained by the B2B team. Unlike primary_b2b_pharma_obj…"
+    meta:
+      metrics:
+        total_count_obj_deo_openings:
+          type: sum
+          label: "Total Deo Openings Objective"
+          description: "Sum of the monthly objectives. Only meaningful for whole months."
+        total_count_obj_skin_openings:
+          type: sum
+          label: "Total Skin Openings Objective"
+          description: "Sum of the monthly objectives. Only meaningful for whole months."
+        total_count_obj_opening_orders:
+          type: sum
+          label: "Total Opening Orders Objective"
+          description: "Sum of the monthly objectives. Only meaningful for whole months."

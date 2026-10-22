@@ -1,0 +1,17 @@
+models:
+  - name: hq_objectives_skin_doors
+    description: "Monthly pharma objectives of the headquarters view, one row per month and sales team (Terrain or IS), from the \"objectifs pharma siège\" sheet maintained by the B2B team. Unlike primary_b2b_pharma_obj…"
+    meta:
+      metrics:
+        total_count_obj_skin_openings:
+          type: sum
+          label: "Total Skin Openings Objective"
+          description: "Sum of the monthly objectives. Only meaningful for whole months."
+        total_count_obj_new_skin_doors:
+          type: number
+          label: "Total New Skin Doors Objective"
+          description: "Skin openings objective plus deo to skin conversions objective, summed over the selected months and sales teams."
+        total_count_obj_deo_to_skin_conversions:
+          type: sum
+          label: "Total Deo To Skin Conversions Objective"
+          description: "Sum of the monthly objectives. Only meaningful for whole months."

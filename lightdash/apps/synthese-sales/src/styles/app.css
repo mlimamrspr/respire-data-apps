@@ -1,0 +1,45 @@
+/* App-level additions to the design system (not in bundle.css). Token values only. */
+
+/* Filter menus are portalled outside .rd-shell: pin them to the dark tokens so they never
+   follow the host's light theme (the chrome in chart-overrides.css reads these vars). */
+.rd-menu {
+  --background: var(--rd-bg-page);
+  --foreground: var(--rd-ink);
+  --popover: var(--rd-bg-panel);
+  --popover-foreground: var(--rd-ink);
+  --accent: var(--rd-bg-track);
+  --accent-foreground: var(--rd-ink);
+  font-family: var(--rd-font-sans);
+  font-size: 13px;
+}
+
+.rd-seg button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Pages 2-5 until their semantic layer exists. */
+.rd-soon {
+  display: flex; flex-direction: column; align-items: center; gap: var(--rd-space-2);
+  padding: var(--rd-space-6); background: var(--rd-bg-panel);
+  border: 1px dashed var(--rd-border-strong); border-radius: var(--rd-radius-lg);
+  color: var(--rd-ink-muted); text-align: center;
+}
+.rd-soon b { color: var(--rd-ink); }
+
+/* Panel body while loading or in error (PanelState). */
+.rd-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--rd-space-2); min-height: 240px; color: var(--rd-ink-muted); text-align: center;
+}
+.rd-state--error { color: var(--rd-ink); }
+.rd-state--error b { color: var(--rd-status-bad); }
+.rd-spin { animation: rd-spin 1s linear infinite; }
+@keyframes rd-spin { to { transform: rotate(360deg); } }
+
+/* Active limits of the view, under the page head. */
+.rd-notice {
+  display: flex; flex-direction: column; gap: var(--rd-space-1);
+  margin-bottom: var(--rd-space-4); padding: var(--rd-space-2) var(--rd-space-3);
+  background: var(--rd-bg-panel); border: 1px solid var(--rd-border-strong);
+  border-left: 3px solid var(--rd-status-warn); border-radius: var(--rd-radius-md);
+  color: var(--rd-ink-muted); font-size: 12.5px;
+}
+.rd-notice b { color: var(--rd-ink); }

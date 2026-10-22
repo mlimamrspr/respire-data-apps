@@ -1,0 +1,155 @@
+models:
+  - name: dtm_b2b_pharma_transactions_v2
+    description: "Pharma B2B orders and refunds (one row per order or per refund), with columns renamed to the Respire naming conventions. Reads dtm_b2b_pharma_transactions without changing any value: it is a temporar…"
+    meta:
+      metrics:
+        nb_distinct_orders:
+          type: count_distinct
+          label: "Number of Distinct Orders"
+          description: "Odoo sale orders, invoiced or not, refunds excluded."
+        nb_distinct_new_doors:
+          type: count_distinct
+          label: "Number of Distinct New Doors"
+          description: "New pharmacies (deodorant or skin opening order, invoiced or in progress), counted on distinct CIP, dated at the reference date of their opening order transactions."
+        avg_amt_turnover_bt_eur:
+          type: average
+          label: "Average Order Value BT"
+          description: "Average order value excluding VAT, counting orders not invoiced yet at their order amount. Refunds are excluded."
+        total_amt_turnover_bt_eur:
+          type: sum
+          label: "Total Turnover BT"
+          description: "Pharma turnover excluding VAT, net of refunds, counting orders not invoiced yet at their order amount (\"CA réel en cours\"). Use total_amt_turnover_invoiced_bt_eur for invoiced turnover only."
+        pct_achievement_turnover_hq:
+          type: number
+          label: "Percentage Achievement Turnover HQ"
+          description: "Turnover excluding VAT, including orders not invoiced yet, over the monthly headquarters turnover objective. Read on whole months."
+        avg_amt_turnover_invoiced_bt_eur:
+          type: average
+          label: "Average Order Value Invoiced BT"
+          description: "Average invoiced amount excluding VAT per invoiced order. Orders not yet invoiced are left out of both the amount and the count, refunds are excluded."
+        pct_gap_turnover_invoiced_vs_obj:
+          type: number
+          label: "Percentage Gap Turnover Invoiced VS Objective"
+          description: "Invoiced turnover relative to the cycle turnover objective, minus 1 (e.g. -0.74 when 26% of the objective is reached). Null when there is no objective. "
+        total_amt_turnover_invoiced_bt_eur:
+          type: sum
+          label: "Total Turnover Invoiced BT"
+          description: "Pharma turnover invoiced excluding VAT, net of refunds. Orders not yet invoiced are not counted."
+        pct_achievement_turnover_invoiced_hq:
+          type: number
+          label: "Percentage Achievement Turnover Invoiced HQ"
+          description: "Invoiced turnover excluding VAT over the monthly headquarters turnover objective. Read on whole months."
+        amt_gap_turnover_invoiced_vs_obj_bt_eur:
+          type: number
+          label: "Gap Turnover Invoiced VS Objective BT"
+          description: "Invoiced turnover minus the cycle turnover objective, excluding VAT. Negative when behind the objective. Compare whole cycles only: the objective is not prorated to the date filter. "
+      joins:
+        - join: primary_b2b_pharma_objectives
+          relationship: many-to-one
+          sql_on: "${dtm_b2b_pharma_transactions_v2.code_cycle} = ${primary_b2b_pharma_objectives.code_cycle} AND ${dtm_b2b_pharma_transactions_v2.name_sector} = ${primary_b2b_pharma_objectives.name_sector}"
+        - join: primary_b2b_pharma_hq_objectives
+          relationship: many-to-one
+          sql_on: "DATE_TRUNC(${dtm_b2b_pharma_transactions_v2.dt_reference}, MONTH) = ${primary_b2b_pharma_hq_objectives.dt_month} AND ${dtm_b2b_pharma_transactions_v2.type_sales_team} = ${primary_b2b_pharma_hq_objectives.type_sales_team}"
+    columns:
+      - name: code_cip
+        label: "Code CIP"
+        description: "Pharmacy CIP code, the national identifier of a French pharmacy. Several Odoo customers can share a CIP, and some customers have none. "
+        meta:
+          dimension:
+            type: string
+      - name: code_cycle
+        label: "Code Cycle"
+        description: "Pharma field sales cycle, as named in the objectives sheet (C1, C2, C3 in 2026). Its bounds are given by dt_start_cycle and dt_end_cycle. "
+        meta:
+          dimension:
+            type: string
+      - name: is_new_door
+        label: "Is New Door"
+        description: "True when the transaction belongs to the opening order of a new pharmacy (deodorant or skin), whether the order is already invoiced or still in progress, as flagged in the pharma orders. "
+        meta:
+          dimension:
+            type: boolean
+      - name: is_preorder
+        label: "Is Preorder"
+        description: "True when the order carries a pre-order tag in Odoo (e.g. PRECO SOLAIRE SKIN 2026, TF DEO OCTOBRE), the orders taken during a trade fair or a pre-order campaign. Null for refunds. "
+        meta:
+          dimension:
+            type: boolean
+      - name: name_market
+        label: "Name Market"
+        description: "Reporting market of the customer (Go Global zone), from the customer's country in Odoo: 'France' (France, Monaco and a few customers without a country) or 'Belgium'. The pharma headquarters reporting…"
+        meta:
+          dimension:
+            type: string
+      - name: name_region
+        label: "Name Region"
+        description: "Sales region a sector belongs to: field regions (Nord, Ouest, Sud, Zone Blanche) or Inside Sales. Null when the pharmacy has no sector, and for some sectors not mapped to a region. "
+        meta:
+          dimension:
+            type: string
+      - name: name_sector
+        label: "Name Sector"
+        description: "Field sales territory, in uppercase (e.g. LYON EST, PARIS CENTRE, ZONE BLANCHE). 'Pas de secteur' when the pharmacy has no sector in Odoo. "
+        meta:
+          dimension:
+            type: string
+      - name: dt_reference
+        label: "Date Reference"
+        description: "Date the transaction counts in the turnover. For orders: first invoice date; if not invoiced, ask date minus 2 business days; otherwise order date plus 2 business days. For refunds: credit note creat…"
+        meta:
+          dimension:
+            type: date
+      - name: type_sales_team
+        label: "Type Sales Team"
+        description: "Pharma sales team: 'Terrain' (field sales reps) or 'IS' (Inside Sales)."
+        meta:
+          dimension:
+            type: string
+      - name: dt_reference_day
+        label: "Date Reference day"
+        description: "Date the transaction counts in the turnover. For orders: first invoice date; if not invoiced, ask date minus 2 business days; otherwise order date plus 2 business days. For refunds: credit note creat…"
+        meta:
+          dimension:
+            type: date
+      - name: type_transaction
+        label: "Type Transaction"
+        description: "'order' for an Odoo sale order, 'refund' for a credit note (amounts are negative)."
+        meta:
+          dimension:
+            type: string
+      - name: categ_decile_skin
+        label: "Category Decile Skin"
+        description: "Strategic skin decile of the pharmacy, as recorded on the customer in Odoo: 1 to 10, 1 being the best. Also 'Leclerc' for Leclerc pharmacies, 'N/A' when no decile is assigned, and 'P' for a few custo…"
+        meta:
+          dimension:
+            type: string
+      - name: dt_reference_week
+        label: "Date Reference week"
+        description: "Date the transaction counts in the turnover. For orders: first invoice date; if not invoiced, ask date minus 2 business days; otherwise order date plus 2 business days. For refunds: credit note creat…"
+        meta:
+          dimension:
+            type: date
+      - name: dt_reference_year
+        label: "Date Reference year"
+        description: "Date the transaction counts in the turnover. For orders: first invoice date; if not invoiced, ask date minus 2 business days; otherwise order date plus 2 business days. For refunds: credit note creat…"
+        meta:
+          dimension:
+            type: date
+      - name: dt_reference_month
+        label: "Date Reference month"
+        description: "Date the transaction counts in the turnover. For orders: first invoice date; if not invoiced, ask date minus 2 business days; otherwise order date plus 2 business days. For refunds: credit note creat…"
+        meta:
+          dimension:
+            type: date
+      - name: categ_turnover_split
+        label: "Category Turnover Split"
+        description: "Type of order, as split in the sales team reporting: 'Implantation' for the opening order of a new pharmacy (invoiced or in progress), 'TF' for a pre-order (trade fair), 'Réassort' for any other repe…"
+        meta:
+          dimension:
+            type: string
+      - name: dt_reference_quarter
+        label: "Date Reference quarter"
+        description: "Date the transaction counts in the turnover. For orders: first invoice date; if not invoiced, ask date minus 2 business days; otherwise order date plus 2 business days. For refunds: credit note creat…"
+        meta:
+          dimension:
+            type: date

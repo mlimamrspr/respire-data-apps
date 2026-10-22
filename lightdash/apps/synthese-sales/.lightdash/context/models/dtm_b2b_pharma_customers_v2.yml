@@ -1,0 +1,237 @@
+models:
+  - name: dtm_b2b_pharma_customers_v2
+    description: "Pharma B2B customers (one row per Odoo customer), with columns renamed to the Respire naming conventions. Reads dtm_b2b_pharma_customers without changing any value except is_skin, which merges skin a…"
+    meta:
+      metrics:
+        nb_distinct_openings:
+          type: count_distinct
+          label: "Number of Distinct Openings"
+          description: "New pharmacies, their opening order being invoiced or still in progress, counted on distinct CIP, internal accounts excluded. Filter on dt_commercial_opening_in_progress for the period."
+        pct_active_pharmacies:
+          type: number
+          label: "Percentage Active Pharmacies"
+          description: "Active pharmacies over all pharmacies of the park, both counted on distinct CIP."
+        pct_skin_distribution:
+          type: number
+          label: "Percentage Skin Distribution"
+          description: "Active skin pharmacies over active pharmacies, both counted on distinct CIP."
+        nb_distinct_pharmacies:
+          type: count_distinct
+          label: "Number of Distinct Pharmacies"
+          description: "Pharmacies of the park, active or not, counted on distinct CIP."
+        nb_distinct_deo_openings:
+          type: count_distinct
+          label: "Number of Distinct Deo Openings"
+          description: "New pharmacies whose opening order contains deodorants, counted on distinct CIP, internal accounts excluded. Filter on dt_commercial_opening_in_progress for the period."
+        nb_distinct_skin_openings:
+          type: count_distinct
+          label: "Number of Distinct Skin Openings"
+          description: "New pharmacies whose opening order contains skin products, counted on distinct CIP, internal accounts excluded. Filter on dt_commercial_opening_in_progress for the period."
+        nb_distinct_new_skin_doors:
+          type: count_distinct
+          label: "Number of Distinct New Skin Doors"
+          description: "Pharmacies placing their first skin order, counted on distinct CIP, internal accounts excluded. Filter on dt_first_skin_order for the period."
+        nb_distinct_active_pharmacies:
+          type: count_distinct
+          label: "Number of Distinct Active Pharmacies"
+          description: "Pharmacies with an order in the last 270 days (Parc actif), counted on distinct CIP."
+        nb_distinct_invoiced_openings:
+          type: count_distinct
+          label: "Number of Distinct Invoiced Openings"
+          description: "New pharmacies whose opening order is invoiced, counted on distinct CIP, internal accounts excluded. Filter on dt_commercial_opening for the period."
+        nb_distinct_active_skin_pharmacies:
+          type: count_distinct
+          label: "Number of Distinct Active Skin Pharmacies"
+          description: "Active pharmacies carrying the skin range, partly or fully (Parc actif skin), counted on distinct CIP."
+        nb_distinct_deo_to_skin_conversions:
+          type: count_distinct
+          label: "Number of Distinct Deo To Skin Conversions"
+          description: "Pharmacies placing their first skin order without it being a skin opening, i.e. existing customers adding the skin range, counted on distinct CIP, internal accounts excluded. Filter on dt_first_skin_…"
+      joins:
+        - join: hq_objectives_openings
+          relationship: many-to-one
+          sql_on: "DATE_TRUNC(${dtm_b2b_pharma_customers_v2.dt_commercial_opening_in_progress}, MONTH) = ${hq_objectives_openings.dt_month} AND ${dtm_b2b_pharma_customers_v2.type_sales_team} = ${hq_objectives_openings.type_sales_team}"
+        - join: hq_objectives_skin_doors
+          relationship: many-to-one
+          sql_on: "DATE_TRUNC(${dtm_b2b_pharma_customers_v2.dt_first_skin_order}, MONTH) = ${hq_objectives_skin_doors.dt_month} AND ${dtm_b2b_pharma_customers_v2.type_sales_team} = ${hq_objectives_skin_doors.type_sales_team}"
+    columns:
+      - name: is_skin
+        label: "Is Skin"
+        description: "True when the pharmacy carries the skin range, partly (bought SERHINTPO30 or SERGLOW30-30) or fully (the whole skin assortment). Unlike is_skin in dtm_b2b_pharma_customers, it includes full skin phar…"
+        meta:
+          dimension:
+            type: boolean
+      - name: code_cip
+        label: "Code CIP"
+        description: "Pharmacy CIP code, the national identifier of a French pharmacy. Several Odoo customers can share a CIP, and some customers have none. "
+        meta:
+          dimension:
+            type: string
+      - name: is_active
+        label: "Is Active"
+        description: "True when the pharmacy has an order or refund dated in the last 270 days from today."
+        meta:
+          dimension:
+            type: boolean
+      - name: code_cycle
+        label: "Code Cycle"
+        description: "Pharma field sales cycle, as named in the objectives sheet (C1, C2, C3 in 2026). Its bounds are given by dt_start_cycle and dt_end_cycle. "
+        meta:
+          dimension:
+            type: string
+      - name: name_market
+        label: "Name Market"
+        description: "Reporting market of the customer (Go Global zone), from the customer's country in Odoo: 'France' (France, Monaco and a few customers without a country) or 'Belgium'. The pharma headquarters reporting…"
+        meta:
+          dimension:
+            type: string
+      - name: name_region
+        label: "Name Region"
+        description: "Sales region a sector belongs to: field regions (Nord, Ouest, Sud, Zone Blanche) or Inside Sales. Null when the pharmacy has no sector, and for some sectors not mapped to a region. "
+        meta:
+          dimension:
+            type: string
+      - name: name_sector
+        label: "Name Sector"
+        description: "Field sales territory, in uppercase (e.g. LYON EST, PARIS CENTRE, ZONE BLANCHE). 'Pas de secteur' when the pharmacy has no sector in Odoo. "
+        meta:
+          dimension:
+            type: string
+      - name: is_deo_opening
+        label: "Is Deo Opening"
+        description: "True when the pharmacy's opening order contains deodorants, whether that order is invoiced or still in progress. "
+        meta:
+          dimension:
+            type: boolean
+      - name: is_skin_opening
+        label: "Is Skin Opening"
+        description: "True when the pharmacy's opening order contains skin products, whether that order is invoiced or still in progress. A first skin order that is not a skin opening is a deo to skin conversion. "
+        meta:
+          dimension:
+            type: boolean
+      - name: type_sales_team
+        label: "Type Sales Team"
+        description: "Pharma sales team: 'Terrain' (field sales reps) or 'IS' (Inside Sales)."
+        meta:
+          dimension:
+            type: string
+      - name: categ_decile_skin
+        label: "Category Decile Skin"
+        description: "Strategic skin decile of the pharmacy, as recorded on the customer in Odoo: 1 to 10, 1 being the best. Also 'Leclerc' for Leclerc pharmacies, 'N/A' when no decile is assigned, and 'P' for a few custo…"
+        meta:
+          dimension:
+            type: string
+      - name: dt_first_skin_order
+        label: "Date First Skin Order"
+        description: "Date of the pharmacy's first order containing a skin product. Null when it never ordered skin."
+        meta:
+          dimension:
+            type: date
+      - name: is_internal_account
+        label: "Is Internal Account"
+        description: "True for Respire staff or test accounts, whose email contains @respire.co. Excluded from door counts."
+        meta:
+          dimension:
+            type: boolean
+      - name: dt_commercial_opening
+        label: "Date Commercial Opening"
+        description: "Date of the pharmacy's first invoiced order, which opens the door commercially once invoiced. Null for prospects and while the opening order is still in progress. "
+        meta:
+          dimension:
+            type: date
+      - name: dt_first_skin_order_day
+        label: "Date First Skin Order day"
+        description: "Date of the pharmacy's first order containing a skin product. Null when it never ordered skin."
+        meta:
+          dimension:
+            type: date
+      - name: dt_first_skin_order_week
+        label: "Date First Skin Order week"
+        description: "Date of the pharmacy's first order containing a skin product. Null when it never ordered skin."
+        meta:
+          dimension:
+            type: date
+      - name: dt_first_skin_order_year
+        label: "Date First Skin Order year"
+        description: "Date of the pharmacy's first order containing a skin product. Null when it never ordered skin."
+        meta:
+          dimension:
+            type: date
+      - name: dt_commercial_opening_day
+        label: "Date Commercial Opening day"
+        description: "Date of the pharmacy's first invoiced order, which opens the door commercially once invoiced. Null for prospects and while the opening order is still in progress. "
+        meta:
+          dimension:
+            type: date
+      - name: dt_first_skin_order_month
+        label: "Date First Skin Order month"
+        description: "Date of the pharmacy's first order containing a skin product. Null when it never ordered skin."
+        meta:
+          dimension:
+            type: date
+      - name: dt_commercial_opening_week
+        label: "Date Commercial Opening week"
+        description: "Date of the pharmacy's first invoiced order, which opens the door commercially once invoiced. Null for prospects and while the opening order is still in progress. "
+        meta:
+          dimension:
+            type: date
+      - name: dt_commercial_opening_year
+        label: "Date Commercial Opening year"
+        description: "Date of the pharmacy's first invoiced order, which opens the door commercially once invoiced. Null for prospects and while the opening order is still in progress. "
+        meta:
+          dimension:
+            type: date
+      - name: dt_commercial_opening_month
+        label: "Date Commercial Opening month"
+        description: "Date of the pharmacy's first invoiced order, which opens the door commercially once invoiced. Null for prospects and while the opening order is still in progress. "
+        meta:
+          dimension:
+            type: date
+      - name: dt_first_skin_order_quarter
+        label: "Date First Skin Order quarter"
+        description: "Date of the pharmacy's first order containing a skin product. Null when it never ordered skin."
+        meta:
+          dimension:
+            type: date
+      - name: dt_commercial_opening_quarter
+        label: "Date Commercial Opening quarter"
+        description: "Date of the pharmacy's first invoiced order, which opens the door commercially once invoiced. Null for prospects and while the opening order is still in progress. "
+        meta:
+          dimension:
+            type: date
+      - name: dt_commercial_opening_in_progress
+        label: "Date Commercial Opening In Progress"
+        description: "Date of the pharmacy's first order, invoiced or still in progress, which opens the door commercially. Null for prospects. "
+        meta:
+          dimension:
+            type: date
+      - name: dt_commercial_opening_in_progress_day
+        label: "Date Commercial Opening In Progress day"
+        description: "Date of the pharmacy's first order, invoiced or still in progress, which opens the door commercially. Null for prospects. "
+        meta:
+          dimension:
+            type: date
+      - name: dt_commercial_opening_in_progress_week
+        label: "Date Commercial Opening In Progress week"
+        description: "Date of the pharmacy's first order, invoiced or still in progress, which opens the door commercially. Null for prospects. "
+        meta:
+          dimension:
+            type: date
+      - name: dt_commercial_opening_in_progress_year
+        label: "Date Commercial Opening In Progress year"
+        description: "Date of the pharmacy's first order, invoiced or still in progress, which opens the door commercially. Null for prospects. "
+        meta:
+          dimension:
+            type: date
+      - name: dt_commercial_opening_in_progress_month
+        label: "Date Commercial Opening In Progress month"
+        description: "Date of the pharmacy's first order, invoiced or still in progress, which opens the door commercially. Null for prospects. "
+        meta:
+          dimension:
+            type: date
+      - name: dt_commercial_opening_in_progress_quarter
+        label: "Date Commercial Opening In Progress quarter"
+        description: "Date of the pharmacy's first order, invoiced or still in progress, which opens the door commercially. Null for prospects. "
+        meta:
+          dimension:
+            type: date

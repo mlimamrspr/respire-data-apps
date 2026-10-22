@@ -1,0 +1,94 @@
+models:
+  - name: dtm_b2b_pharma_history_v2
+    description: "Daily snapshot of the pharma B2B customers (one row per Odoo customer and day since 2023-01-01), with columns renamed to the Respire naming conventions. Reads dtm_b2b_pharma_history without changing …"
+    meta:
+      metrics:
+        pct_skin_distribution:
+          type: number
+          label: "Percentage Skin Distribution"
+          description: "Active skin pharmacies over active pharmacies, both counted on distinct CIP."
+        nb_distinct_active_pharmacies:
+          type: count_distinct
+          label: "Number of Distinct Active Pharmacies"
+          description: "Pharmacies with an order in the 270 days before dt_day (Parc actif), counted on distinct CIP. Filter dt_day on a single day."
+        nb_distinct_active_deo_pharmacies:
+          type: count_distinct
+          label: "Number of Distinct Active Deo Pharmacies"
+          description: "Active pharmacies carrying no skin product (Parc actif déo), counted on distinct CIP. Filter dt_day on a single day."
+        nb_distinct_active_skin_pharmacies:
+          type: count_distinct
+          label: "Number of Distinct Active Skin Pharmacies"
+          description: "Active pharmacies carrying the skin range, partly or fully (Parc actif skin), counted on distinct CIP. Filter dt_day on a single day."
+        pct_achievement_active_pharmacies_hq:
+          type: number
+          label: "Percentage Achievement Active Pharmacies HQ"
+          description: "Active pharmacies of the day over the park objective of its month (headquarters sheet)."
+        pct_achievement_active_skin_pharmacies_hq:
+          type: number
+          label: "Percentage Achievement Active Skin Pharmacies HQ"
+          description: "Active skin pharmacies of the day over the skin park objective of its month (headquarters sheet)."
+      joins:
+        - join: primary_b2b_pharma_hq_objectives
+          relationship: many-to-one
+          sql_on: "DATE_TRUNC(${dtm_b2b_pharma_history_v2.dt_day}, MONTH) = ${primary_b2b_pharma_hq_objectives.dt_month} AND ${dtm_b2b_pharma_history_v2.type_sales_team} = ${primary_b2b_pharma_hq_objectives.type_sales_team}"
+    columns:
+      - name: dt_day
+        label: "Date Day"
+        description: "Day of the snapshot: the pharmacy's status is computed from its orders up to that day. Runs up to the end of the current month: the days after today are computed from the orders known today. "
+        meta:
+          dimension:
+            type: date
+      - name: is_deo
+        label: "Is Deo"
+        description: "True when the pharmacy carries no skin product as of dt_day, whatever its deodorant coverage (part or the whole deo assortment). Merges is_deo and is_full_deo of dtm_b2b_pharma_history; exclusive wit…"
+        meta:
+          dimension:
+            type: boolean
+      - name: is_skin
+        label: "Is Skin"
+        description: "True when the pharmacy carries the skin range as of dt_day, partly (bought SERHINTPO30 or SERGLOW30-30) or fully (the whole skin assortment). Merges is_skin and is_full_skin of dtm_b2b_pharma_history…"
+        meta:
+          dimension:
+            type: boolean
+      - name: code_cip
+        label: "Code CIP"
+        description: "Pharmacy CIP code, the national identifier of a French pharmacy. Several Odoo customers can share a CIP, and some customers have none. "
+        meta:
+          dimension:
+            type: string
+      - name: is_active
+        label: "Is Active"
+        description: "True when the pharmacy has an order dated in the 270 days before dt_day."
+        meta:
+          dimension:
+            type: boolean
+      - name: dt_day_day
+        label: "Date Day day"
+        description: "Day of the snapshot: the pharmacy's status is computed from its orders up to that day. Runs up to the end of the current month: the days after today are computed from the orders known today. "
+        meta:
+          dimension:
+            type: date
+      - name: name_market
+        label: "Name Market"
+        description: "Reporting market of the customer (Go Global zone), from the customer's country in Odoo: 'France' (France, Monaco and a few customers without a country) or 'Belgium'. The pharma headquarters reporting…"
+        meta:
+          dimension:
+            type: string
+      - name: dt_day_month
+        label: "Date Day month"
+        description: "Day of the snapshot: the pharmacy's status is computed from its orders up to that day. Runs up to the end of the current month: the days after today are computed from the orders known today. "
+        meta:
+          dimension:
+            type: date
+      - name: type_sales_team
+        label: "Type Sales Team"
+        description: "Pharma sales team: 'Terrain' (field sales reps) or 'IS' (Inside Sales)."
+        meta:
+          dimension:
+            type: string
+      - name: categ_decile_skin
+        label: "Category Decile Skin"
+        description: "Strategic skin decile of the pharmacy, as recorded on the customer in Odoo: 1 to 10, 1 being the best. Also 'Leclerc' for Leclerc pharmacies, 'N/A' when no decile is assigned, and 'P' for a few custo…"
+        meta:
+          dimension:
+            type: string

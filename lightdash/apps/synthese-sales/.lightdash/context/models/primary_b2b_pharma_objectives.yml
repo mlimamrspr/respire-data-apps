@@ -1,0 +1,118 @@
+models:
+  - name: primary_b2b_pharma_objectives
+    description: "Pharma field sales objectives, one row per sales cycle and sector, from the objectives sheet maintained by the B2B team. Also the reference calendar of the cycles: dt_start_cycle and dt_end_cycle giv…"
+    meta:
+      metrics:
+        total_count_obj_dn_sun:
+          type: sum
+          label: "Total DN Sun Objective"
+          description: "Sum of the cycle objectives of sun range numeric distribution. Only meaningful for whole cycles: a date filter shorter than a cycle still returns the full cycle objective."
+        pct_achievement_mea_sun:
+          type: number
+          label: "Percentage Achievement MEA Sun"
+          description: "Pharmacies with a skin sun market VIP or Elite pack over the cycle objective."
+        total_count_obj_mea_sun:
+          type: sum
+          label: "Total MEA Sun Objective"
+          description: "Sum of the cycle objectives of sun range highlight. Only meaningful for whole cycles: a date filter shorter than a cycle still returns the full cycle objective."
+        pct_achievement_turnover:
+          type: number
+          label: "Percentage Achievement Turnover"
+          description: "Turnover excluding VAT, including orders not invoiced yet, over the cycle turnover objective."
+        pct_achievement_dn_longevity:
+          type: number
+          label: "Percentage Achievement DN Longevity"
+          description: "Pharmacies ordering the Longevity serum over the cycle objective."
+        total_count_inbound_requests:
+          type: sum
+          label: "Total Inbound Requests"
+          description: "Sum of the inbound requests of the field sales team. Only meaningful for whole cycles: a date filter shorter than a cycle still returns the full cycle value."
+        total_count_obj_dn_longevity:
+          type: sum
+          label: "Total DN Longevity Objective"
+          description: "Sum of the cycle objectives of Longevity numeric distribution. Only meaningful for whole cycles: a date filter shorter than a cycle still returns the full cycle objective."
+        pct_achievement_mea_longevity:
+          type: number
+          label: "Percentage Achievement MEA Longevity"
+          description: "Pharmacies with a Longevity VIP or Elite pack over the cycle objective."
+        total_amt_obj_turnover_bt_eur:
+          type: sum
+          label: "Total Turnover Objective BT"
+          description: "Sum of the cycle turnover objectives excluding VAT. Only meaningful for whole cycles: a date filter shorter than a cycle still returns the full cycle objective."
+        total_count_obj_mea_longevity:
+          type: sum
+          label: "Total MEA Longevity Objective"
+          description: "Sum of the cycle objectives of Longevity highlight. Only meaningful for whole cycles: a date filter shorter than a cycle still returns the full cycle objective."
+        pct_achievement_new_skin_doors:
+          type: number
+          label: "Percentage Achievement New Skin Doors"
+          description: "New skin doors (internal accounts excluded) over the cycle objective of new skin doors."
+        total_count_obj_new_doors_skin:
+          type: sum
+          label: "Total New Doors Skin Objective"
+          description: "Sum of the cycle objectives of new skin doors. Only meaningful for whole cycles: a date filter shorter than a cycle still returns the full cycle objective."
+        total_count_perfect_pharmacies:
+          type: sum
+          label: "Total Perfect Pharmacies"
+          description: "Sum of the \"Perfect Officine\" pharmacies reported in the merch sheet. Only meaningful for whole cycles: a date filter shorter than a cycle still returns the full cycle value."
+        pct_achievement_perfect_pharmacies:
+          type: number
+          label: "Percentage Achievement Perfect Pharmacies"
+          description: "\"Perfect Officine\" pharmacies (4 shelves) over the cycle objective."
+        total_count_obj_perfect_pharmacies:
+          type: sum
+          label: "Total Perfect Pharmacies Objective"
+          description: "Sum of the cycle objectives of \"Perfect Officine\" pharmacies. Only meaningful for whole cycles: a date filter shorter than a cycle still returns the full cycle value."
+      joins:
+        - join: dtm_b2b_pharma_customers_v2
+          relationship: one-to-many
+          sql_on: "${primary_b2b_pharma_objectives.code_cycle} = ${dtm_b2b_pharma_customers_v2.code_cycle} AND ${primary_b2b_pharma_objectives.name_sector} = ${dtm_b2b_pharma_customers_v2.name_sector}"
+        - join: dtm_b2b_pharma_customer_cycles
+          relationship: one-to-many
+          sql_on: "${primary_b2b_pharma_objectives.code_cycle} = ${dtm_b2b_pharma_customer_cycles.code_cycle} AND ${primary_b2b_pharma_objectives.name_sector} = ${dtm_b2b_pharma_customer_cycles.name_sector}"
+        - join: dtm_b2b_pharma_transactions_v2
+          relationship: one-to-many
+          sql_on: "${primary_b2b_pharma_objectives.code_cycle} = ${dtm_b2b_pharma_transactions_v2.code_cycle} AND ${primary_b2b_pharma_objectives.name_sector} = ${dtm_b2b_pharma_transactions_v2.name_sector} AND ${primary_b2b_pharma_objectives.name_region} = ${dtm_b2b_pharma_transactions_v2.name_region}"
+    columns:
+      - name: code_cycle
+        label: "Code Cycle"
+        description: "Pharma field sales cycle, as named in the objectives sheet (C1, C2, C3 in 2026). Its bounds are given by dt_start_cycle and dt_end_cycle. "
+        meta:
+          dimension:
+            type: string
+      - name: name_region
+        label: "Name Region"
+        description: "Sales region a sector belongs to: field regions (Nord, Ouest, Sud, Zone Blanche) or Inside Sales. Null when the pharmacy has no sector, and for some sectors not mapped to a region. "
+        meta:
+          dimension:
+            type: string
+      - name: name_sector
+        label: "Name Sector"
+        description: "Field sales territory, in uppercase (e.g. LYON EST, PARIS CENTRE, ZONE BLANCHE). 'Pas de secteur' when the pharmacy has no sector in Odoo. "
+        meta:
+          dimension:
+            type: string
+      - name: dt_end_cycle
+        label: "Date End Cycle"
+        description: "Last day of the sales cycle: the day before the next cycle starts, or December 31 for the last cycle of the year. Derived, the objectives sheet has no end date. "
+        meta:
+          dimension:
+            type: date
+      - name: dt_start_cycle
+        label: "Date Start Cycle"
+        description: "First day of the sales cycle, as set in the objectives sheet."
+        meta:
+          dimension:
+            type: date
+      - name: dt_end_cycle_day
+        label: "Date End Cycle day"
+        description: "Last day of the sales cycle: the day before the next cycle starts, or December 31 for the last cycle of the year. Derived, the objectives sheet has no end date. "
+        meta:
+          dimension:
+            type: date
+      - name: dt_start_cycle_day
+        label: "Date Start Cycle day"
+        description: "First day of the sales cycle, as set in the objectives sheet."
+        meta:
+          dimension:
+            type: date

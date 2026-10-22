@@ -1,0 +1,92 @@
+models:
+  - name: dtm_b2b_pharma_customer_cycles
+    description: "Pharmacy achievements on the field sales incentives (\"primés\") of a cycle, one row per pharmacy (CIP), cycle and sector of its orders. Only cycle C3 2026 is computed: each cycle rewards other product…"
+    meta:
+      metrics:
+        nb_distinct_dn_sun_pharmacies:
+          type: count_distinct
+          label: "Number of Distinct DN Sun Pharmacies"
+          description: "Numeric distribution of the sun range (2027 pre-order or first order of the current sun stick), counted on distinct CIP."
+        nb_distinct_mea_sun_pharmacies:
+          type: count_distinct
+          label: "Number of Distinct MEA Sun Pharmacies"
+          description: "Pharmacies highlighting the sun range with a skin sun market VIP or Elite pack, counted on distinct CIP."
+        nb_distinct_dn_bodycare_pharmacies:
+          type: count_distinct
+          label: "Number of Distinct DN Bodycare Pharmacies"
+          description: "Pharmacies ordering the five products of the bodycare range in the cycle, counted on distinct CIP."
+        nb_distinct_dn_longevity_pharmacies:
+          type: count_distinct
+          label: "Number of Distinct DN Longevity Pharmacies"
+          description: "Numeric distribution of the Longevity serum, counted on distinct CIP."
+        nb_distinct_mea_longevity_pharmacies:
+          type: count_distinct
+          label: "Number of Distinct MEA Longevity Pharmacies"
+          description: "Pharmacies highlighting the Longevity serum with a VIP or Elite pack, counted on distinct CIP."
+    columns:
+      - name: code_cip
+        label: "Code CIP"
+        description: "Pharmacy CIP code, the national identifier of a French pharmacy. Several Odoo customers can share a CIP, and some customers have none. "
+        meta:
+          dimension:
+            type: string
+      - name: code_cycle
+        label: "Code Cycle"
+        description: "Pharma field sales cycle, as named in the objectives sheet (C1, C2, C3 in 2026). Its bounds are given by dt_start_cycle and dt_end_cycle. "
+        meta:
+          dimension:
+            type: string
+      - name: name_region
+        label: "Name Region"
+        description: "Sales region a sector belongs to: field regions (Nord, Ouest, Sud, Zone Blanche) or Inside Sales. Null when the pharmacy has no sector, and for some sectors not mapped to a region. "
+        meta:
+          dimension:
+            type: string
+      - name: name_sector
+        label: "Name Sector"
+        description: "Field sales territory, in uppercase (e.g. LYON EST, PARIS CENTRE, ZONE BLANCHE). 'Pas de secteur' when the pharmacy has no sector in Odoo. "
+        meta:
+          dimension:
+            type: string
+      - name: has_sun_pack
+        label: "Has Sun Pack"
+        description: "True when the pharmacy ordered a skin sun market VIP or Elite pack in the cycle, dated at the order date."
+        meta:
+          dimension:
+            type: boolean
+      - name: has_sun_order
+        label: "Has Sun Order"
+        description: "True when the pharmacy, in the cycle, placed a 2027 skin sun pre-order (PRECO SOLAIRE SKIN 2027) or ordered the sun stick (CRESOLST50-15) without having ordered its current version between 2025-09-08…"
+        meta:
+          dimension:
+            type: boolean
+      - name: dt_start_cycle
+        label: "Date Start Cycle"
+        description: "First day of the sales cycle, as set in the objectives sheet."
+        meta:
+          dimension:
+            type: date
+      - name: dt_start_cycle_day
+        label: "Date Start Cycle day"
+        description: "First day of the sales cycle, as set in the objectives sheet."
+        meta:
+          dimension:
+            type: date
+      - name: has_longevity_pack
+        label: "Has Longevity Pack"
+        description: "True when the pharmacy ordered a Longevity VIP or Elite pack along with the Longevity serum in the cycle, dated at the order date."
+        meta:
+          dimension:
+            type: boolean
+      - name: has_longevity_order
+        label: "Has Longevity Order"
+        description: "True when the pharmacy ordered the Longevity serum (SKU SERLISS30) in the cycle, dated at the order date."
+        meta:
+          dimension:
+            type: boolean
+      - name: has_bodycare_full_range
+        label: "Has Bodycare Full Range"
+        description: "True when the pharmacy ordered the five products of the bodycare range in the cycle (SKUs SKBOREHUU01, SKBOREHUR01, SKBORELAU01, LACORECH450, STLISS25), dated at the reference date of the order lines…"
+        meta:
+          dimension:
+            type: boolean

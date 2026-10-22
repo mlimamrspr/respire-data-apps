@@ -1,0 +1,118 @@
+models:
+  - name: dtm_b2b_pharma_order_lines_v2
+    description: "Pharma B2B order lines (one row per product line and invoice), with columns renamed to the Respire naming conventions. Reads dtm_b2b_pharma_order_lines without changing any value: it is a temporary n…"
+    meta:
+      metrics:
+        pct_turnover_invoiced_skin:
+          type: number
+          label: "Percentage Turnover Invoiced Skin"
+          description: "Share of the invoiced turnover coming from the Skincare and Suncare shelves, both computed on order lines. Matches the skin share of the former Looker Studio dashboard. "
+        total_amt_turnover_skin_bt_eur:
+          type: sum
+          label: "Total Turnover Skin BT"
+          description: "Turnover excluding VAT of the Skincare and Suncare shelves, net of the refunds attached to an order, counting orders not invoiced yet at their order amount."
+        pct_achievement_turnover_skin_hq:
+          type: number
+          label: "Percentage Achievement Turnover Skin HQ"
+          description: "Turnover excluding VAT of the Skincare and Suncare shelves, including orders not invoiced yet, over the monthly headquarters skin turnover objective. Read on whole months."
+        total_amt_turnover_invoiced_bt_eur:
+          type: sum
+          label: "Total Turnover Invoiced BT"
+          description: "Pharma turnover invoiced excluding VAT, net of the refunds attached to an order. Orders not yet invoiced are not counted."
+        total_amt_turnover_invoiced_skin_bt_eur:
+          type: sum
+          label: "Total Turnover Invoiced Skin BT"
+          description: "Invoiced turnover excluding VAT of the Skincare and Suncare shelves, net of the refunds attached to an order."
+        pct_achievement_turnover_invoiced_skin_hq:
+          type: number
+          label: "Percentage Achievement Turnover Invoiced Skin HQ"
+          description: "Invoiced turnover excluding VAT of the Skincare and Suncare shelves over the monthly headquarters skin turnover objective. Read on whole months."
+      joins:
+        - join: primary_b2b_pharma_hq_objectives
+          relationship: many-to-one
+          sql_on: "DATE_TRUNC(${dtm_b2b_pharma_order_lines_v2.dt_reference}, MONTH) = ${primary_b2b_pharma_hq_objectives.dt_month} AND ${dtm_b2b_pharma_order_lines_v2.type_sales_team} = ${primary_b2b_pharma_hq_objectives.type_sales_team}"
+    columns:
+      - name: code_cycle
+        label: "Code Cycle"
+        description: "Pharma field sales cycle, as named in the objectives sheet (C1, C2, C3 in 2026). Its bounds are given by dt_start_cycle and dt_end_cycle. "
+        meta:
+          dimension:
+            type: string
+      - name: name_market
+        label: "Name Market"
+        description: "Reporting market of the customer (Go Global zone), from the customer's country in Odoo: 'France' (France, Monaco and a few customers without a country) or 'Belgium'. The pharma headquarters reporting…"
+        meta:
+          dimension:
+            type: string
+      - name: name_region
+        label: "Name Region"
+        description: "Sales region a sector belongs to: field regions (Nord, Ouest, Sud, Zone Blanche) or Inside Sales. Null when the pharmacy has no sector, and for some sectors not mapped to a region. "
+        meta:
+          dimension:
+            type: string
+      - name: name_sector
+        label: "Name Sector"
+        description: "Field sales territory, in uppercase (e.g. LYON EST, PARIS CENTRE, ZONE BLANCHE). 'Pas de secteur' when the pharmacy has no sector in Odoo. "
+        meta:
+          dimension:
+            type: string
+      - name: dt_reference
+        label: "Date Reference"
+        description: "Date the order counts in the turnover: first invoice date; if not invoiced, ask date minus 2 business days; otherwise order date plus 2 business days. Refund lines carry the date of their original or…"
+        meta:
+          dimension:
+            type: date
+      - name: type_sales_team
+        label: "Type Sales Team"
+        description: "Pharma sales team: 'Terrain' (field sales reps) or 'IS' (Inside Sales)."
+        meta:
+          dimension:
+            type: string
+      - name: dt_reference_day
+        label: "Date Reference day"
+        description: "Date the order counts in the turnover: first invoice date; if not invoiced, ask date minus 2 business days; otherwise order date plus 2 business days. Refund lines carry the date of their original or…"
+        meta:
+          dimension:
+            type: date
+      - name: type_transaction
+        label: "Type Transaction"
+        description: "'order' for an Odoo sale order, 'refund' for a credit note (amounts are negative)."
+        meta:
+          dimension:
+            type: string
+      - name: categ_decile_skin
+        label: "Category Decile Skin"
+        description: "Strategic skin decile of the pharmacy, as recorded on the customer in Odoo: 1 to 10, 1 being the best. Also 'Leclerc' for Leclerc pharmacies, 'N/A' when no decile is assigned, and 'P' for a few custo…"
+        meta:
+          dimension:
+            type: string
+      - name: dt_reference_week
+        label: "Date Reference week"
+        description: "Date the order counts in the turnover: first invoice date; if not invoiced, ask date minus 2 business days; otherwise order date plus 2 business days. Refund lines carry the date of their original or…"
+        meta:
+          dimension:
+            type: date
+      - name: dt_reference_year
+        label: "Date Reference year"
+        description: "Date the order counts in the turnover: first invoice date; if not invoiced, ask date minus 2 business days; otherwise order date plus 2 business days. Refund lines carry the date of their original or…"
+        meta:
+          dimension:
+            type: date
+      - name: dt_reference_month
+        label: "Date Reference month"
+        description: "Date the order counts in the turnover: first invoice date; if not invoiced, ask date minus 2 business days; otherwise order date plus 2 business days. Refund lines carry the date of their original or…"
+        meta:
+          dimension:
+            type: date
+      - name: categ_shelf_product
+        label: "Category Shelf Product"
+        description: "Merchandising shelf of the product, from the Odoo product catalogue (rayon): Skincare, Suncare, Hygiène (deodorants, dental care), Coffret, Kits, Echantillon, Accessoires, Autres. Skin turnover is Sk…"
+        meta:
+          dimension:
+            type: string
+      - name: dt_reference_quarter
+        label: "Date Reference quarter"
+        description: "Date the order counts in the turnover: first invoice date; if not invoiced, ask date minus 2 business days; otherwise order date plus 2 business days. Refund lines carry the date of their original or…"
+        meta:
+          dimension:
+            type: date

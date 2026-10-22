@@ -1,0 +1,28 @@
+models:
+  - name: dtm_b2b_transactions_monthly_vs_obj
+    columns:
+      - name: dt_month
+        label: "Dt month"
+        meta:
+          dimension:
+            type: date
+      - name: b2b_channel
+        label: "B 2b channel"
+        meta:
+          dimension:
+            type: string
+      - name: name_market
+        label: "Name market"
+        meta:
+          dimension:
+            type: string
+      - name: amt_turnover_current_bt_eur
+        label: "Amt turnover current bt eur"
+        meta:
+          dimension:
+            type: number
+      - name: amt_turnover_current_bt_eur_last_year
+        label: "Amt turnover current bt eur last year"
+        meta:
+          dimension:
+            type: number

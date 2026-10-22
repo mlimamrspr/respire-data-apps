@@ -1,0 +1,39 @@
+/* Synthèse Sales tokens — generated from docs/synthese-sales/design-system/tokens.css, namespaced --rd-* to avoid clashing with shadcn tokens (--accent); on :root so portalled menus inherit them. */
+:root {
+  --rd-bg-page: #121823;
+  --rd-bg-panel: #1a2230;
+  --rd-bg-card: #151c28;
+  --rd-bg-track: #2a3546;
+  --rd-border-subtle: #2f3a4c;
+  --rd-border-strong: #56657d;
+  --rd-ink: #f3f5f9;
+  --rd-ink-muted: #aab5c6;
+  --rd-ink-faint: #8794aa;
+  --rd-accent: #38bdf8;
+  --rd-series-deo: var(--rd-accent);
+  --rd-series-skin: #e0458f;
+  --rd-series-sun: #f9a8d4;
+  --rd-series-pending: #94a3b8;
+  --rd-channel-terrain: #60a5fa;
+  --rd-channel-is: #a78bfa;
+  --rd-status-ok: #4ade80;
+  --rd-status-ok-soft: rgba(74, 222, 128, 0.12);
+  --rd-status-warn: #f59e0b;
+  --rd-status-warn-soft: rgba(245, 158, 11, 0.12);
+  --rd-status-bad: #f87171;
+  --rd-status-bad-soft: rgba(248, 113, 113, 0.12);
+  --rd-delta-up: var(--rd-accent);
+  --rd-delta-down: var(--rd-status-bad);
+  --rd-focus: #7dd3fc;
+  --rd-space-1: 4px;
+  --rd-space-2: 8px;
+  --rd-space-3: 12px;
+  --rd-space-4: 16px;
+  --rd-space-6: 24px;
+  --rd-radius-sm: 4px;
+  --rd-radius-md: 8px;
+  --rd-radius-lg: 12px;
+  --rd-radius-pill: 999px;
+  --rd-font-display: Poppins, "Segoe UI", system-ui, sans-serif;
+  --rd-font-sans: Inter, "Segoe UI", system-ui, sans-serif;
+}

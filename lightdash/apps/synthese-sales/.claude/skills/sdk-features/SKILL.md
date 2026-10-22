@@ -1,0 +1,217 @@
+---
+name: sdk-features
+description: Map Lightdash SDK capabilities to their host-UI names and the app-code wiring each needs. Use when the user asks about a feature by name (Inspect data, drill-down, exports, shareable URLs), when offering newly available features after a template upgrade, or when wiring a host-facing capability into the app.
+---
+
+The `@lightdash/query-sdk` in this workspace declares its capabilities in a
+registry: `node_modules/@lightdash/query-sdk/dist/features.js` (`SDK_FEATURES`,
+each `{ key, label, description, wiring? }`). That registry is the source of
+truth — never invent capabilities from export lists or type definitions. This
+skill adds what the registry can't: how each feature maps to the Lightdash
+host UI and the exact wiring recipe.
+
+## Vocabulary: users speak host-UI, the SDK speaks keys
+
+Users describe features by what they see in the Lightdash editor. Translate:
+
+| User says / host UI | Registry key | Wiring |
+| --- | --- | --- |
+| "Inspect data" (Queries panel button) | `lineage` | required — see below |
+| "select an element", editor element picker | `inspect` | none (automatic) |
+| thumbnails / screenshots / scheduled deliveries | `screenshot` | required — see below |
+| drill down, click into a chart | `drill-down` | app code opt-in |
+| drill into a viz data point (reusable visualization) | `viz-drill-down` | app code opt-in |
+| "ask the AI", one-line takeaway, explain this row | `ai-prompt` | app code opt-in |
+| "share this view", URL that restores state | `url-state` | app code opt-in |
+| "remember my filters", "keep my inputs", shared comments/targets/notes, "who changed this" | `app-state` | app code opt-in — only when the host has it enabled |
+| Google Sheets export | `gsheet-export` | app code opt-in |
+| "delivery has all tabs", full data in scheduled deliveries | `delivery-render` | app code opt-in |
+| external API data | `external-fetch` | app code opt-in |
+| runs inside a dashboard tile | `viz-context` | required — see below |
+| reusable chart/table with pivoted results | `viz-pivoted-results` | required — see below |
+| "Data point actions" — native context menu on a data-point click (copy, view underlying data, drill, cross-filter; viz only) | `point-action-menu` | app code opt-in |
+| "view underlying data", raw rows behind a point (viz only) | `viz-underlying-data` | app code opt-in |
+| Lightdash-owned "View underlying data" dialog (viz only) | `viz-host-underlying-data` | app code opt-in |
+| light/dark mode, "matches my Lightdash theme" | `follow-host-theme` | CSS tokens — see below |
+| "executive summary", "what changed", anomaly callouts, "AI insight", "Analyse this view" | `ai-insights` | app code opt-in |
+| "Adapts to small tiles", responsive, works on a phone, readable in a narrow or short tile (viz only) | `viz-responsive-layout` | layout — see below |
+
+## Automatic (zero wiring — active on any current-SDK bundle)
+
+`createClient()` mounts these itself: the capability **manifest**, the editor
+**element inspector** (`inspect`), and the **lineage runtime**. Core querying
+(`query`, `saved-chart` via `useLightdash`/`savedChart`) is just normal SDK
+usage. If the app calls `createClient()`, these need nothing from you.
+
+## Wiring recipes
+
+### `lineage` — the host's "Inspect data" button
+
+The lineage runtime only announces itself once the DOM contains
+`data-ld-query` stamps; until then the host's Inspect data button stays
+disabled. Spread the `lineage` props returned by `useLightdash` onto the root
+element of every query-bound block:
+
+```jsx
+const { data, lineage } = useLightdash(myQuery);
+return <div {...lineage}>{/* chart rendered from data */}</div>;
+```
+
+Stamp every visualization, not just one — each stamp maps that block to its
+query in the host's Queries panel.
+
+### `screenshot` — thumbnails and scheduled deliveries
+
+Provided by the template file `src/screenshotHandler.js`; `main.jsx` must
+import and call it (`initScreenshotHandler()`). Apps migrated from older
+templates may be missing the file or the call — copy the file from the
+template and add the call rather than reimplementing.
+
+### `viz-context` — apps embedded as dashboard tiles
+
+Wrap the app in `VizContextProvider` (see the template `main.jsx`) and read
+the host-supplied query context with `useVizContext`. Only relevant for
+visualization-style apps meant to run inside dashboards.
+
+### `follow-host-theme` — light/dark mode
+
+The SDK puts the `dark` class on `<html>` as the app boots and again
+whenever the viewer toggles their Lightdash theme, so an app that styles
+everything through the theme tokens follows along with no code at all. What an
+older app usually needs is the opposite of wiring — *removing* what pins it to
+one mode:
+
+- drop any `className="dark …"` on the app shell and any
+  `document.documentElement.classList.add('dark')`;
+- move dark values out of `:root` and into `.dark`, leaving a complete set of
+  light values on `:root`;
+- keep both sets complete for every token the app defines.
+
+For colours CSS can't reach (a chart library's theme object, a logo swap), read
+the mode: `const colorScheme = useColorScheme();` — `'light' | 'dark'`,
+re-rendering on every host toggle.
+
+### `viz-responsive-layout` — a chart type that adapts to small tiles
+
+There is no API to call: this is a layout rework. The chart renders in an iframe
+exactly the size of its tile, and the tile never resizes to its content, so the
+chart adapts to the tile.
+
+The template makes the frame the container, but a chart type built on an older
+template carries its own copies of `src/main.jsx` and `src/index.css` without
+that. Add both pieces first if they are missing:
+
+```jsx
+// src/main.jsx — import useVizContext from '@lightdash/query-sdk', define this,
+// and render <VizFrame /> just before <App /> inside <VizContextProvider>.
+function VizFrame() {
+    const { ready } = useVizContext();
+    React.useEffect(() => {
+        document.documentElement.toggleAttribute('data-viz-frame', ready);
+    }, [ready]);
+    return null;
+}
+```
+
+```css
+/* src/index.css — inside the `@layer base` block that holds the `#root` rules. */
+html[data-viz-frame] {
+  font-size: clamp(12px, calc(4px + 2.5vw), 16px);
+}
+html[data-viz-frame] #root {
+  height: 100vh;
+  overflow-y: auto;
+}
+```
+
+Then follow the "Fitting the frame" section of the `reusable-visualization`
+skill. An older chart type usually needs its fixed column counts and pixel sizes
+replaced with wrapping, `rem`-sized ones and its own scroll regions removed; a
+chart drawn by a library that measures its container often needs nothing more.
+Keep the declaration (fields, config options, palette) unchanged.
+
+### `viz-pivoted-results` — reusable visualization pivots
+
+Read `pivotDetails` from `useVizContext()`. When it is non-null, match
+`pivotDetails.valuesColumns` to the mapped metric by `referenceField`, derive series
+labels from `pivotValues`, and read each generated `pivotColumnName` with
+`getRaw(row, pivotColumnName)` or `getFormatted(row, pivotColumnName)`. Generated and
+ordinary row keys both contain `VizContextCell` objects; never coerce `row[fieldId]`
+directly. Use the remaining metadata for the visualization's actual shape: `indexColumn` and
+`originalColumns` provide row-grain/type semantics, `groupByColumns` provides header
+order, `sortBy` describes result ordering, `totalColumnCount` exposes truncation, and
+`passthroughDimensions` identifies hidden fields retained on rows. Preserve the ordinary
+`fieldMapping` path when `pivotDetails` is null. The full contract is in the
+`reusable-visualization` skill.
+
+### App-code opt-ins (call the API where it fits the app)
+
+- `drill-down`: `drillDown(...)` derives a more detailed query from a clicked
+  result row — wire it to click handlers on charts/rows.
+- `point-action-menu` (vizs only): the primary data-point-action contract. On a
+  data-point click, when `useVizContext().pointMenu.enabled`, call
+  `pointMenu.open({ x: event.clientX, y: event.clientY, row: datum.sourceRow, metric: '<field name>' })`
+  and render no menu of your own — Lightdash renders the entire native menu
+  (copy value, view underlying data, drill, dashboard cross-filtering) and
+  owns all subsequent UI. `viz-drill-down` and
+  `viz-underlying-data`/`viz-host-underlying-data` below are the
+  `pointMenu.enabled === false` fallback for older hosts, not a separate
+  feature to wire in addition.
+- `viz-drill-down`: in a reusable visualization, when
+  `useVizContext().pointMenu.enabled`, call `pointMenu.open({ x, y, row, metric })`
+  and render no menu of your own — Lightdash's menu offers "Drill into …".
+  Only when `pointMenu.enabled` is false, fall back to a local data-point
+  action menu gated on `drillDown.enabled` and call
+  `drillDown.open({ row, metric })` on selection. Either way Lightdash opens
+  its drill dialog. Distinct from `drill-down`, which is the full-app query
+  helper.
+- `url-state`: `useUrlState(...)` syncs a piece of app state into the page URL
+  so views can be shared and restored.
+- `app-state`: `useAppState(key, default)` remembers a value per person;
+  `useSharedAppState(key, default)` keeps a value every viewer shares, with a
+  version, author and history (`client.appState.history(key)`). Offer it only
+  when the build prompt says saved app state is available; the hooks fall back
+  to memory otherwise. Full contract in `/app/references/app-state.md`.
+- `gsheet-export`: `exportToSheets(...)` sends tabular results to a new
+  Google Sheet — offer it wherever the app renders a table.
+- `external-fetch`: `client.externalFetch(alias, opts)` calls an external
+  connection linked to this app. The connection must already be linked by the
+  host; you cannot add one from app code.
+- `ai-insights`: wire the shipped components in `src/components/insights/`
+  (`InsightsSummary`, `InsightMarker` / `insightCellProps`,
+  `InvestigateMenuItem`, `InvestigationCard`) rather than writing your own:
+  summary block at the top, markers on every query-bound chart (as both `dot`
+  and `activeDot`), Investigate in every point menu, the card under the chart.
+  A short ask ("add AI analysis") gets the whole set. They sit on
+  `useInsights()` / `useInsights(result)` and render nothing when the host has
+  no analysis. Full contract in `/app/references/ai-analysis.md`.
+- `ai-prompt`: `useAiPrompt()` returns `{ available, ask, loading, text, error }`;
+  `ask({ prompt, sources: [{ result, label }], focus?: { row } })` sends an
+  author-written question over loaded `useLightdash` results and resolves to
+  plain text. `result` is the object `useLightdash` returns (keep a reference
+  to it even when destructuring), never a rebuilt `{ data, columns }`. Hide the control when `available` is false; trigger from a user
+  action. Full contract in `/app/references/ai-analysis.md`.
+- `delivery-render`: `useDeliveryRender()` is `true` during scheduled-delivery
+  and delivery-preview capture renders. Gate tab/slide DATA mounting on it so
+  every tab's queries execute during capture while only the active tab stays
+  visible — never mount all tabs unconditionally (interactive loads must stay
+  lazy).
+- `viz-underlying-data` and `viz-host-underlying-data` (vizs only): keep the
+  untransformed `sourceRow` on each interactive datum. When
+  `useVizContext().pointMenu.enabled`, call `pointMenu.open({ x, y, row, metric })`
+  and render no menu of your own. Only when `pointMenu.enabled` is false, fall
+  back to a local data-point action menu gated on `underlyingData.enabled` and
+  call `underlyingData.open({ row, metric })` on selection. Either way,
+  Lightdash renders the dialog and owns its table, loading, error, and
+  download controls. Full contract in the `reusable-visualization` skill.
+
+## After a template upgrade
+
+An upgrade rebuilds the app on the current SDK, which turns on the automatic
+capabilities but does NOT add wiring — that is a deliberate rail. When you
+offer newly available features, offer wiring-required ones too (their registry
+entries carry a `wiring` note); implement only when the user asks.
+
+Existing published visualization bundles are not rewritten by this registry.
+Bundles built before `viz-host-underlying-data` keep their iframe-owned
+`get`/`download` dialog until the user explicitly upgrades that feature.

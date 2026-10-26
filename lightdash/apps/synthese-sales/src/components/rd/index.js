@@ -11,3 +11,5 @@ export { Panel, Block } from './Panel';
 export { TabNav, PageHead } from './TabNav';
 export { FilterBar } from './FilterBar';
 export { PanelState } from './PanelState';
+export { TFCard } from './TFCard';
+export { ColumnChart } from './ColumnChart';

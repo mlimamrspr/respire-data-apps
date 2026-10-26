@@ -6,17 +6,21 @@ import { FilterBar, PageHead, TabNav } from './components/rd';
 import { PAGES, useView } from './lib/view';
 import { SynthesePage } from './pages/SynthesePage';
 import { ReassortPage } from './pages/ReassortPage';
+import { TFLivePage } from './pages/TFLivePage';
 import { ComingSoon } from './pages/ComingSoon';
 
 // A TF carries its own range; the Réassort queries have no gamme (transactions, current skin status).
 const NO_GAMME_PAGES = ['reassort', 'tf-encours', 'tf-passes'];
-const BUILT_PAGES = { synthese: SynthesePage, reassort: ReassortPage };
+const BUILT_PAGES = { synthese: SynthesePage, reassort: ReassortPage, 'tf-encours': TFLivePage };
 
 // Limits of the semantic layer that the active filters run into, stated rather than hidden.
 function Notice({ view }) {
   const lines = [];
   if (view.deciles.length) {
     lines.push(<><b>Décile</b> : les objectifs ne sont pas déclinés par décile, ils s’affichent « Obj n.d. ».</>);
+  }
+  if (view.canal !== 'all' && view.page === 'tf-encours') {
+    lines.push(<><b>Canal</b> : les objectifs des TF sont nationaux, tous canaux confondus, ils s’affichent « Obj n.d. ».</>);
   }
   if (view.gamme !== 'all' && view.page === 'synthese') {
     lines.push(<><b>Gamme</b> : ne s’applique qu’au bloc CA (hors typologie) ; parc et nouvelles portes restent toutes gammes [à valider].</>);

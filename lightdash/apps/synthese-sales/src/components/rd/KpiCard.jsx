@@ -4,8 +4,9 @@ import { Meta } from './Meta';
 import { Breakdown } from './Breakdown';
 
 // children sit between the head and the meta line (ProgressBar, SplitBar); breakdown comes last.
+// neutral: % of a final objective with no status (upcoming TF).
 export function KpiCard({
-  label, channel, dot, value, size = 'lg', pct, children, meta, sub, breakdown, ...rest
+  label, channel, dot, value, size = 'lg', pct, neutral = false, children, meta, sub, breakdown, ...rest
 }) {
   return (
     <div className="rd-card" {...rest}>
@@ -14,7 +15,7 @@ export function KpiCard({
       </div>
       <div className="rd-card__head">
         <span className={`rd-value rd-value--${size}`}>{value}</span>
-        <StatusPill pct={pct} />
+        <StatusPill pct={pct} neutral={neutral} suffix={neutral ? 'de l’obj' : 'vs obj'} />
       </div>
       {children}
       <Meta items={meta} />

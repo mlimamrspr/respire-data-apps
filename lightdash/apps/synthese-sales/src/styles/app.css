@@ -85,3 +85,58 @@
 
 /* Turnover the order lines cannot assign to a gamme (Avoirs non affectés). */
 .rd-dot--other { background: var(--rd-ink-muted); }
+
+/* Two-panel pages: each panel takes the height of its content instead of the taller one. */
+.rd-layout-2 { align-items: start; }
+
+/* TF en cours page: fits a 1440 × 800 screen; panels spaced like the page sections. */
+.rd-stack { display: flex; flex-direction: column; gap: 10px; }
+/* Five TF cards per row, the next ones reached by sliding the row (scroll or arrows). */
+.rd-tfslider { position: relative; }
+.rd-tfgrid--scroll {
+  --rd-tf-cols: 5;
+  display: grid; grid-auto-flow: column;
+  grid-template-columns: none;
+  grid-auto-columns: calc((100% - (var(--rd-tf-cols) - 1) * var(--rd-space-2)) / var(--rd-tf-cols));
+  gap: var(--rd-space-2);
+  overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-behavior: smooth;
+  scrollbar-width: thin; scrollbar-color: var(--rd-border-strong) transparent; padding-bottom: 4px;
+}
+@media (max-width: 1100px) { .rd-tfgrid--scroll { --rd-tf-cols: 2; } }
+.rd-tfgrid--scroll > .rd-tf { scroll-snap-align: start; }
+.rd-tfslider__nav {
+  position: absolute; top: 50%; z-index: 1; transform: translateY(-50%);
+  display: grid; place-items: center; width: 28px; height: 28px; padding: 0;
+  border: 1px solid var(--rd-border-strong); border-radius: var(--rd-radius-pill);
+  background: var(--rd-bg-panel); color: var(--rd-ink); cursor: pointer;
+}
+.rd-tfslider__nav:disabled { display: none; }
+.rd-tfslider__nav:focus-visible { outline: 2px solid var(--rd-focus); }
+.rd-tfslider__nav--prev { left: -10px; }
+.rd-tfslider__nav--next { right: -10px; }
+.rd-tf { padding: 8px 10px; gap: 6px; }
+.rd-tf__head { gap: 3px; padding-bottom: 6px; }
+.rd-tf__phase { gap: 4px 6px; }
+.rd-tf__phase .rd-chip { height: 18px; padding: 0 6px; font-size: 10px; }
+.rd-tf__phase .rd-meta { font-size: 10px; line-height: 13px; }
+.rd-tfm { gap: 2px; }
+.rd-tfm__top { font-size: 11px; line-height: 14px; }
+.rd-tfm__row { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+.rd-tfm__val b { font-size: 14px; line-height: 18px; }
+.rd-tfm__row .rd-meta { font-size: 10px; line-height: 13px; white-space: nowrap; }
+.rd-tfm .rd-bar { height: 4px; }
+.rd-cols { padding-top: 20px; }
+.rd-colitem { gap: 2px; }
+.rd-colitem__foot { display: flex; align-items: center; gap: 4px; }
+.rd-tf { gap: 5px; }
+.rd-tfm { gap: 1px; }
+.rd-tfm__top { line-height: 13px; }
+.rd-tfm__val b { font-size: 13px; line-height: 16px; }
+/* Packs panel on one row: the two KPI cards, then the column chart. */
+.rd-tfpacks { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2.4fr); gap: var(--rd-space-2); }
+@media (max-width: 1100px) { .rd-tfpacks { grid-template-columns: 1fr 1fr; } .rd-tfpacks > :last-child { grid-column: 1 / -1; } }
+.rd-tfpacks .rd-cols { padding-top: 16px; }
+.rd-tfpacks .rd-colitem { width: auto; flex: 1 1 0; min-width: 0; }
+.rd-tfpacks .rd-colitem__name { font-size: 11px; line-height: 13px; }
+.rd-tfpacks .rd-colitem__name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rd-tfpacks .rd-colitem__foot { white-space: nowrap; }

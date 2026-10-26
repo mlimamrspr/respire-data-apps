@@ -9,6 +9,7 @@ export const OL = 'dtm_b2b_pharma_order_lines_v2';
 export const CU = 'dtm_b2b_pharma_customers_v2';
 export const HI = 'dtm_b2b_pharma_history_v2';
 export const HQ = 'primary_b2b_pharma_hq_objectives';
+export const OP = 'dtm_b2b_pharma_order_packs_v2';
 
 export const F = {
   tx: {
@@ -22,6 +23,8 @@ export const F = {
     reordering: `${TX}.nb_distinct_reordering_pharma_customers`,
     openingDelay: `${TX}.avg_duration_since_opening_day`,
     firstRepeats: `${TX}.nb_first_repeat_orders_after_opening`,
+    orderDate: `${TX}.dt_order`, preorderType: `${TX}.type_preorder`,
+    preordering: `${TX}.nb_distinct_preordering_pharmacies`,
   },
   ol: {
     date: `${OL}.dt_reference`, market: `${OL}.name_market`, team: `${OL}.type_sales_team`,
@@ -42,6 +45,18 @@ export const F = {
     decile: `${HI}.categ_decile_skin`,
     active: `${HI}.nb_distinct_active_pharmacies`, deo: `${HI}.nb_distinct_active_deo_pharmacies`,
     skin: `${HI}.nb_distinct_active_skin_pharmacies`,
+  },
+  // One row per pharmacy and TF; objectives repeat on every row of their TF.
+  op: {
+    tf: `${OP}.type_preorder`, state: `${OP}.state_campaign`, followed: `${OP}.has_preorder_objective`,
+    start: `${OP}.dt_start_campaign`, end: `${OP}.dt_end_campaign`, firstPreorder: `${OP}.dt_first_preorder`,
+    market: `${OP}.name_market`, team: `${OP}.type_sales_team`, decile: `${OP}.categ_decile_skin`,
+    dn: `${OP}.nb_distinct_preordering_pharmacies`, dnObj: `${OP}.max_count_obj_preordering_pharmacies`,
+    packs: `${OP}.total_qty_packs`, packsObj: `${OP}.total_count_obj_packs`,
+    premium: `${OP}.total_qty_pack_premium`, premiumObj: `${OP}.max_count_obj_pack_premium`,
+    vip: `${OP}.total_qty_pack_vip`, vipObj: `${OP}.max_count_obj_pack_vip`,
+    elite: `${OP}.total_qty_pack_elite`, eliteObj: `${OP}.max_count_obj_pack_elite`,
+    is: `${OP}.total_qty_pack_is`, isObj: `${OP}.max_count_obj_pack_is`,
   },
   hq: {
     month: `${HQ}.dt_month`, team: `${HQ}.type_sales_team`,
@@ -78,6 +93,8 @@ const GAP_GRAIN = { month: 'month', quarter: 'quarter', ytd: 'year' };
 export const gapMetric = (grain) => `${TX}.avg_pharmacy_duration_since_previous_repeat_order_day_${GAP_GRAIN[grain]}`;
 const byGrain = (build) => Object.fromEntries(Object.keys(GAP_GRAIN).map((g) => [g, build(gapMetric(g))]));
 const delayMetrics = (gap) => [gap, F.tx.gap, F.tx.reordering, F.tx.openingDelay, F.tx.firstRepeats];
+const tfObjMetrics = [F.op.dnObj, F.op.packsObj, F.op.premiumObj, F.op.vipObj, F.op.eliteObj, F.op.isObj];
+const tfPackMetrics = [F.op.packs, F.op.premium, F.op.vip, F.op.elite, F.op.is];
 
 export const Q = {
   ca: query(TX).label('Synthèse · CA').metrics(caMetrics).limit(1),
@@ -119,7 +136,23 @@ export const Q = {
     .dimensions([F.tx.skin]).metrics(delayMetrics(gap)).limit(10)),
   delayDeciles: byGrain((gap) => query(TX).label('Réassort · Délais par décile')
     .dimensions([F.tx.decile, F.tx.skin]).metrics([gap, F.tx.reordering]).limit(100)),
+  tfCampaigns: query(OP).label('TF en cours · Temps forts, DN all-time et objectifs')
+    .dimensions([F.op.tf, F.op.state, F.op.start, F.op.end]).metrics([F.op.dn, ...tfObjMetrics]).limit(50),
+  tfPacks: query(OP).label('TF en cours · Packs de la période par TF')
+    .dimensions([F.op.tf]).metrics(tfPackMetrics).limit(50),
+  tfPeriodDn: query(TX).label('TF en cours · DN de la période par TF')
+    .dimensions([F.tx.preorderType]).metrics([F.tx.preordering]).limit(100),
+  tfStatePacks: query(OP).label('TF en cours · Packs de la période par phase')
+    .dimensions([F.op.state]).metrics([F.op.packs]).limit(5),
+  tfStateObjectives: query(OP).label('TF en cours · Objectifs de packs par phase')
+    .dimensions([F.op.state]).metrics([F.op.packsObj]).limit(5),
 };
+
+// TF followed by the headquarters (an objective in the seed, as on Looker) and not over yet.
+export const TF_OPEN = [
+  { field: F.op.followed, operator: 'equals', value: [true] },
+  { field: F.op.state, operator: 'notEquals', value: ['done'] },
+];
 
 // Repeat orders: the Réassort typology of the transactions, and its order lines.
 export const REPEAT_TX = [{ field: F.tx.split, operator: 'equals', value: [SPLIT.repeat] }];

@@ -34,12 +34,54 @@
 .rd-spin { animation: rd-spin 1s linear infinite; }
 @keyframes rd-spin { to { transform: rotate(360deg); } }
 
-/* Active limits of the view, under the page head. */
+/* Active limits of the view, under the filter bar. */
 .rd-notice {
-  display: flex; flex-direction: column; gap: var(--rd-space-1);
-  margin-bottom: var(--rd-space-4); padding: var(--rd-space-2) var(--rd-space-3);
+  display: flex; flex-wrap: wrap; gap: 2px var(--rd-space-4);
+  padding: 6px var(--rd-space-3);
   background: var(--rd-bg-panel); border: 1px solid var(--rd-border-strong);
   border-left: 3px solid var(--rd-status-warn); border-radius: var(--rd-radius-md);
-  color: var(--rd-ink-muted); font-size: 12.5px;
+  color: var(--rd-ink-muted); font-size: 12px; line-height: 16px;
 }
 .rd-notice b { color: var(--rd-ink); }
+
+/* Dense layout: the Synthèse page fits a 1440 × 800 screen without scrolling.
+   Overrides the sizes of bundle.css only; colours stay on the tokens. */
+.rd-page { padding: var(--rd-space-3) var(--rd-space-4); gap: 10px; }
+.rd-page__cols { grid-template-columns: 1.9fr 1fr 1.1fr; gap: var(--rd-space-3); }
+@media (max-width: 1100px) { .rd-page__cols { grid-template-columns: 1fr; } }
+/* Thresholds stay in the legend tooltip when the filter bar would wrap. */
+@media (max-width: 1360px) { .rd-legend .rd-meta { display: none; } }
+.rd-tabs a { padding: 6px 12px; }
+.rd-select, .rd-seg, .rd-legend { height: 32px; }
+.rd-panel { padding: 10px var(--rd-space-3); gap: var(--rd-space-2); }
+.rd-panel__title { font-size: 16px; line-height: 22px; }
+.rd-panel__block { gap: 6px; }
+.rd-panel__blocktitle { font-size: 13px; line-height: 18px; }
+.rd-card { padding: 8px var(--rd-space-3); gap: 4px; }
+.rd-card__label { font-size: 12px; line-height: 16px; }
+.rd-card__head { row-gap: 2px; }
+.rd-card__sub { gap: 2px; padding-top: 4px; }
+.rd-value--xl { font-size: 26px; line-height: 30px; }
+.rd-value--lg { font-size: 20px; line-height: 24px; }
+.rd-value--md { font-size: 16px; line-height: 20px; }
+.rd-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--rd-space-2); }
+.rd-matrix > div { padding: 5px 10px; }
+.rd-matrix__cell { gap: 2px; }
+.rd-matrix__cell .rd-row { gap: 6px; }
+.rd-typo { gap: 6px; }
+.rd-typo__row { row-gap: 2px; }
+/* CA and its objective on one line, "(obj)" like Cmds and AOV. */
+.rd-typo__head, .rd-typo__row { grid-template-columns: 104px 1fr 136px 72px; }
+.rd-typo__val { font-size: 14px; line-height: 18px; }
+.rd-typo__obj { display: inline; }
+
+/* Panel rules (Panel foot): always visible, compact to save height. */
+.rd-panel__foot { padding-top: 4px; font-size: 10px; line-height: 13px; gap: 1px; }
+
+/* Décile table of the Réassort page: a row click sets the Décile filter. */
+.rd-table--click tbody tr { cursor: pointer; }
+.rd-table--click tbody tr[aria-selected="true"] td { background: var(--rd-bg-panel); font-weight: 700; }
+.rd-table--click tbody tr:focus-visible { outline: 2px solid var(--rd-accent); outline-offset: -2px; }
+
+/* Turnover the order lines cannot assign to a gamme (Avoirs non affectés). */
+.rd-dot--other { background: var(--rd-ink-muted); }

@@ -1,13 +1,13 @@
 import clsx from 'clsx';
 import { attain, eurCompact } from '../../lib/kpi';
 import { StatusPill } from './StatusPill';
-import { DeltaN1 } from './DeltaN1';
-import { Obj } from './Meta';
+import { deltaN1 } from './DeltaN1';
+import { Meta, Obj } from './Meta';
 
 const COLS = ['Réel', 'Réel + en cours'];
 
 // rows: [{ key, name, dot, sub, cells: [{ value, obj, prev }, { value, obj, prev }] }].
-// SUN is included in Skin*: rows are never summed.
+// SUN is included in Skin*: Déo + Skin* + Avoirs non affectés make the global turnover.
 export function GammeMatrix({ rows, ...rest }) {
   return (
     <div className="rd-matrix" role="table" aria-label="CA par gamme" {...rest}>
@@ -19,10 +19,11 @@ export function GammeMatrix({ rows, ...rest }) {
         </div>,
         ...r.cells.map((c, i) => (
           <div key={`${r.key}-${i}`} className="rd-matrix__cell">
-            <span className="rd-value rd-value--md">{eurCompact(c.value)}</span>
-            <div className="rd-row"><StatusPill pct={attain(c.value, c.obj)} sm /></div>
-            <div className="rd-meta"><Obj value={c.obj} fmt={eurCompact} /></div>
-            <DeltaN1 cur={c.value} prev={c.prev} />
+            <div className="rd-row">
+              <span className="rd-value rd-value--md">{eurCompact(c.value)}</span>
+              <StatusPill pct={attain(c.value, c.obj)} sm />
+            </div>
+            <Meta items={[<Obj value={c.obj} fmt={eurCompact} />, deltaN1(c.value, c.prev)]} />
           </div>
         )),
       ])}

@@ -1,10 +1,11 @@
 import clsx from 'clsx';
 import { StatusPill } from './StatusPill';
 import { Meta } from './Meta';
+import { Breakdown } from './Breakdown';
 
-// children sit between the head and the meta line (ProgressBar, SplitBar).
+// children sit between the head and the meta line (ProgressBar, SplitBar); breakdown comes last.
 export function KpiCard({
-  label, channel, dot, value, size = 'lg', pct, children, meta, sub, ...rest
+  label, channel, dot, value, size = 'lg', pct, children, meta, sub, breakdown, ...rest
 }) {
   return (
     <div className="rd-card" {...rest}>
@@ -27,6 +28,7 @@ export function KpiCard({
           ))}
         </div>
       )}
+      <Breakdown items={breakdown} />
     </div>
   );
 }

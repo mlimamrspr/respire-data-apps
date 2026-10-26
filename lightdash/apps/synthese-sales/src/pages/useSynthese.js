@@ -1,60 +1,11 @@
 // Data of the Synthèse page: runs the queries of lib/model.js for the current view and
 // assembles the shape each panel reads. A missing value stays null (shown "—" or "Obj n.d.").
-import { useMemo } from 'react';
-import { useLightdash } from '@lightdash/query-sdk';
-import { useGlobalFilters } from '@/lib/filters';
 import {
-  between, CU, F, HI, HQ, OL, onDay, Q, scopeFilters, SKIN_SHELVES, SPLIT, SUN_SHELF, TEAM, TX,
+  first, minus, n, ratio, share, status, sum, useObjectives, useQuery,
+} from '../lib/data';
+import {
+  between, CU, F, HI, OL, onDay, Q, scopeFilters, SKIN_SHELVES, SPLIT, SUN_SHELF, TEAM, TX,
 } from '../lib/model';
-
-const n = (v) => (v == null || v === '' || !Number.isFinite(Number(v)) ? null : Number(v));
-const minus = (a, b) => (a == null || b == null ? null : a - b);
-const ratio = (a, b) => (a == null || !b ? null : a / b);
-const share = (a, b) => (a == null || !b ? null : (a / b) * 100);
-
-// Sum of a field over the rows matching pred; null when no row matches.
-function sum(rows, field, pred = () => true) {
-  let total = null;
-  for (const r of rows || []) {
-    if (!pred(r)) continue;
-    const v = n(r[field]);
-    if (v != null) total = (total ?? 0) + v;
-  }
-  return total;
-}
-const first = (res, field) => n(res.data?.[0]?.[field]);
-
-// One query with the view filters and the app's global filters of its explore.
-function useQuery(base, explore, filters) {
-  const { filtersFor } = useGlobalFilters();
-  const key = JSON.stringify(filters);
-  const q = useMemo(() => base.filters([...filters, ...filtersFor(explore)]), [base, explore, key, filtersFor]);
-  return useLightdash(q);
-}
-
-const status = (...results) => ({
-  loading: results.some((r) => r.loading),
-  error: results.find((r) => r.error)?.error ?? null,
-});
-
-// Objectives are monthly, per sales team, and not split by décile: none when a décile is selected.
-function useObjectives({ canal, deciles, win }) {
-  const filters = [between(F.hq.month, win.months[0], win.months[1])];
-  if (TEAM[canal]) filters.push({ field: F.hq.team, operator: 'equals', value: [TEAM[canal]] });
-  const res = useQuery(Q.objectives, HQ, filters);
-  const rows = deciles.length ? [] : res.data;
-  const asOfMonth = `${win.asOf.slice(0, 7)}-01`;
-  const isTeam = (t) => (r) => r[F.hq.team] === t;
-  const atAsOf = (r) => String(r[F.hq.month]).slice(0, 10) === asOfMonth;
-  return {
-    res,
-    // Flows (turnover, orders, doors) add up over the months of the window.
-    flow: (field, pred) => sum(rows, field, pred),
-    // Park objectives are levels: read on the month of the park date.
-    level: (field, pred = () => true) => sum(rows, field, (r) => atAsOf(r) && pred(r)),
-    isTeam,
-  };
-}
 
 function useCa(view, obj) {
   const { gamme, win, winN1 } = view;
@@ -96,7 +47,14 @@ function useCa(view, obj) {
       { value: inv.sun, obj: null, prev: invN1.sun },
       { value: tot.sun, obj: null, prev: totN1.sun },
     ] },
+    // Transactions are the source of truth: what the order lines cannot assign to a gamme closes the gap.
+    // No n-1 variation: a percentage of a negative amount reads backwards.
+    { key: 'unassigned', name: 'Avoirs non affectés', dot: 'other', cells: [
+      { value: minus(first(ca, F.tx.invoiced), inv.all), obj: null, prev: null },
+      { value: minus(first(ca, F.tx.total), tot.all), obj: null, prev: null },
+    ] },
   ];
+  const GAMME_ROWS = { all: ['deo', 'skin', 'sun', 'unassigned'], skin: ['skin', 'sun'], deo: ['deo'] };
 
   // Global cards: transactions for every gamme, order lines once a gamme is selected (A_VALIDER 1.10).
   const global = {
@@ -106,7 +64,7 @@ function useCa(view, obj) {
     deo: { real: inv.deo, total: tot.deo, obj: null, realPrev: invN1.deo, totalPrev: totN1.deo },
   }[gamme];
 
-  const typoRow = (name, value, caObj, nbObj) => {
+  const typoRow = (name, value, caObj, nbObj, aovObj) => {
     const r = (typo.data || []).find((row) => row[F.tx.split] === value);
     // No order of a typology in the period is a zero, not a missing value.
     const real = n(r?.[F.tx.total]) ?? 0;
@@ -114,21 +72,21 @@ function useCa(view, obj) {
     const ordersObj = obj.flow(nbObj);
     const objTurnover = obj.flow(caObj);
     return { name, real, obj: objTurnover, orders, ordersObj,
-      aov: ratio(real, orders), aovObj: ratio(objTurnover, ordersObj) };
+      aov: ratio(real, orders), aovObj: obj.aov(aovObj) };
   };
 
   return {
-    ...status(ca, caN1, typo, gam, gamN1, obj.res),
+    ...status(ca, caN1, typo, gam, gamN1, obj.res, obj.aovRes),
     lineage: { ca: ca.lineage, gammes: gam.lineage, typology: typo.lineage, objectives: obj.res.lineage },
     data: {
       ...global,
       skinShare: gamme === 'all' ? share(inv.skin, inv.all) : null,
       skinShareObj: gamme === 'all' ? share(objSkin, objCa) : null,
-      gammes: gammes.filter((g) => gamme === 'all' || (gamme === 'deo' ? g.key === 'deo' : g.key !== 'deo')),
+      gammes: gammes.filter((g) => GAMME_ROWS[gamme].includes(g.key)),
       typology: [
-        typoRow('Réassorts', SPLIT.repeat, F.hq.caRepeat, F.hq.nbRepeat),
-        typoRow('Temps forts', SPLIT.preorders, F.hq.caPreorders, F.hq.nbPreorders),
-        typoRow('Implantations', SPLIT.opening, F.hq.caOpening, F.hq.nbOpening),
+        typoRow('Réassorts', SPLIT.repeat, F.hq.caRepeat, F.hq.nbRepeat, F.hq.aovRepeat),
+        typoRow('Temps forts', SPLIT.preorders, F.hq.caPreorders, F.hq.nbPreorders, F.hq.aovPreorders),
+        typoRow('Implantations', SPLIT.opening, F.hq.caOpening, F.hq.nbOpening, F.hq.aovOpening),
       ],
     },
   };

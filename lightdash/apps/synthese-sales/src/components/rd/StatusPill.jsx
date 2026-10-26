@@ -29,7 +29,7 @@ export function StatusPill({ pct, sm = false, suffix = 'vs obj', neutral = false
 
 export function StatusLegend() {
   return (
-    <div className="rd-legend" aria-label="Légende des statuts">
+    <div className="rd-legend" aria-label="Légende des statuts" title="Atteint ≥ 100 % · En cours 70–99 % · En retard < 70 %">
       {['ok', 'warn', 'bad'].map((s) => (
         <span key={s} className={`rd-pill rd-pill--${s} rd-pill--sm`}>{ICONS[s]}{STATUS_TITLE[s]}</span>
       ))}

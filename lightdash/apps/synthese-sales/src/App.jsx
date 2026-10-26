@@ -5,9 +5,12 @@ import './styles/app.css';
 import { FilterBar, PageHead, TabNav } from './components/rd';
 import { PAGES, useView } from './lib/view';
 import { SynthesePage } from './pages/SynthesePage';
+import { ReassortPage } from './pages/ReassortPage';
 import { ComingSoon } from './pages/ComingSoon';
 
-const TF_PAGES = ['tf-encours', 'tf-passes'];
+// A TF carries its own range; the Réassort queries have no gamme (transactions, current skin status).
+const NO_GAMME_PAGES = ['reassort', 'tf-encours', 'tf-passes'];
+const BUILT_PAGES = { synthese: SynthesePage, reassort: ReassortPage };
 
 // Limits of the semantic layer that the active filters run into, stated rather than hidden.
 function Notice({ view }) {
@@ -31,16 +34,16 @@ export default function App() {
     <div className="rd-shell">
       <div className="rd-page" data-screenshot-bounds>
         <TabNav pages={PAGES} current={view.page} onChange={view.setPage} />
-        <FilterBar view={view} hideGamme={TF_PAGES.includes(view.page)} />
+        <FilterBar view={view} hideGamme={NO_GAMME_PAGES.includes(view.page)} />
         <PageHead title={page.title} sub={page.sub} />
         <Notice view={view} />
         {/* A capture render mounts every data-bearing page; only the active one is shown. */}
-        {(view.page === 'synthese' || deliveryRender) && (
-          <div hidden={view.page !== 'synthese'}>
-            <SynthesePage view={view} />
+        {Object.entries(BUILT_PAGES).map(([key, Page]) => (view.page === key || deliveryRender) && (
+          <div key={key} hidden={view.page !== key}>
+            <Page view={view} />
           </div>
-        )}
-        {view.page !== 'synthese' && <ComingSoon page={page} />}
+        ))}
+        {!BUILT_PAGES[view.page] && <ComingSoon page={page} />}
       </div>
     </div>
   );

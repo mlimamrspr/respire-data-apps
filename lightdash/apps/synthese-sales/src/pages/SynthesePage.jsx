@@ -26,14 +26,14 @@ function CaPanel({ state, gamme }) {
       title="Chiffre d’Affaires (CA)"
       foot={[
         <><b>Réel</b> = CA facturé sur la période · <b>En cours</b> = commandes saisies non facturées [à valider]</>,
-        <><b>*</b> Skin = skin + sun · <b>Déo</b> = CA hors skin · <b>AOV</b> = CA / nb de commandes · <b>Nb cmds (obj)</b> entre parenthèses</>,
+        <><b>*</b> Skin = skin + sun · <b>Déo</b> = CA hors skin · <b>AOV</b> = CA / nb de commandes, obj = moyenne des AOV saisis · <b>Nb cmds (obj)</b> entre parenthèses</>,
+        <><b>Avoirs non affectés</b> = CA global − (Déo + Skin*) : avoirs sans commande (RFA, COOP, gestes commerciaux) et avoirs d’une commande hors période, que les lignes de commande ne rattachent à aucune gamme</>,
         <><b>Typologie</b> = CA réel + en cours des commandes, comme le dashboard actuel [à valider]</>,
       ]}
     >
       <PanelState {...state}>
       <Block title="Global" small={GAMME_SCOPE[gamme]}>
-        <div className="rd-grid-2" style={{ gridTemplateColumns: '1.25fr 1fr' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="rd-grid-3">
             <KpiCard
               {...state.lineage.ca}
               label="CA Réel"
@@ -51,20 +51,18 @@ function CaPanel({ state, gamme }) {
             >
               <ProgressBar real={ca.real} obj={ca.obj} pending={ca.total == null || ca.real == null ? 0 : ca.total - ca.real} />
             </KpiCard>
-          </div>
           {gamme === 'all' ? (
             <KpiCard
               {...state.lineage.gammes}
               label="Poids du Skin* dans le CA"
               value={pct(ca.skinShare)}
-              size="xl"
               pct={attain(ca.skinShare, ca.skinShareObj)}
               meta={[<Obj value={ca.skinShareObj} fmt={(v) => pct(v)} />, <span>base CA Réel</span>]}
             >
               <SplitBar skin={ca.skinShare} objSkin={ca.skinShareObj} />
             </KpiCard>
           ) : (
-            <KpiCard label="Poids du Skin* dans le CA" value="—" size="xl" meta={[<span>sans objet avec un filtre Gamme</span>]} />
+            <KpiCard label="Poids du Skin* dans le CA" value="—" meta={[<span>sans objet avec un filtre Gamme</span>]} />
           )}
         </div>
       </Block>

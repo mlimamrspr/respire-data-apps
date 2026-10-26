@@ -20,8 +20,7 @@ export function TypologyBars({ rows, caLabel = 'CA réel vs obj', ...rest }) {
           <span className="rd-typo__name">{r.name}</span>
           <ProgressBar real={r.real} obj={r.obj} thick />
           <span className="rd-typo__val">
-            {eurCompact(r.real)}
-            <span className="rd-typo__obj">obj {r.obj ? eurCompact(r.obj) : 'n.d.'}</span>
+            {eurCompact(r.real)} <span className="rd-typo__obj">{paren(r.obj, eurCompact)}</span>
           </span>
           <span><StatusPill pct={attain(r.real, r.obj)} suffix={false} /></span>
           <div className="rd-typo__sub">

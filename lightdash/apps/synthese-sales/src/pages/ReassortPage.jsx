@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { attain, eur, eurCompact, int } from '../lib/kpi';
+import { hasPharmacyGap } from '../lib/model';
 import { useReassort } from './useReassort';
 import {
   deltaN1, KpiCard, Obj, Panel, PanelState, ProgressBar, StatusPill,
@@ -73,7 +74,7 @@ function DelaysPanel({ state, view }) {
       id="t-freq"
       title="Fréquence & délais de réassort"
       foot={[
-        <><b>Jours entre réassorts</b> = moyenne, par pharmacie, des écarts entre deux réassorts consécutifs sur la période (mois, trimestre ou année), puis moyenne des pharmacies · <b>moy. simple</b> = moyenne de tous les écarts [à valider]</>,
+        <><b>Jours entre réassorts</b> = moyenne, par pharmacie, des écarts entre deux réassorts consécutifs sur la période (mois, trimestre ou année), puis moyenne des pharmacies · <b>moy. simple</b> = moyenne de tous les écarts, seule valeur sur un cycle ou une fenêtre libre [à valider]</>,
         <><b>Délai implantation → 1<sup>er</sup> réassort</b> = date du 1<sup>er</sup> réassort − date d’implantation, rattaché à la date du 1<sup>er</sup> réassort, pharmacies dont la 1<sup>re</sup> commande est une implantation [à valider]</>,
         <><b>Pharma Skin / Déo</b> = statut skin actuel de la pharmacie [à valider] · <b>Plus bas = mieux</b> : atteinte = obj / réel, objectifs de délai à définir</>,
       ]}
@@ -88,7 +89,7 @@ function DelaysPanel({ state, view }) {
           meta={[
             <Obj value={OBJ_DELAY} fmt={days} />,
             <span>plus bas = mieux</span>,
-            <span>moy. simple {days(d.gapSimple)}</span>,
+            hasPharmacyGap(view.grain) ? <span>moy. simple {days(d.gapSimple)}</span> : <span>moyenne simple</span>,
             <span>{pharmacies(d.pharmacies)}</span>,
           ]}
           breakdown={segmentSplit(d.gapSkin, d.gapDeo)}

@@ -1,8 +1,11 @@
 // View state (page + filter bar) kept in the URL so a link reopens the same view.
 // URL values are user-editable: every read is checked against the allowed values.
 import { useCallback, useMemo } from 'react';
-import { useUrlState } from '@lightdash/query-sdk';
-import { GRAINS, defaultPeriod, periodOptions, periodWindow, previousYear } from './period';
+import { useLightdash, useUrlState } from '@lightdash/query-sdk';
+import { F, Q } from './model';
+import {
+  GRAINS, customKey, cycleList, defaultPeriod, parseCustom, periodOptions, periodWindow, previousYear,
+} from './period';
 
 export const PAGES = [
   { v: 'synthese', l: 'Synthèse', title: 'Synthèse' },
@@ -48,21 +51,32 @@ export function useView() {
   const deciles = Array.isArray(rawDeciles)
     ? rawDeciles.filter((d) => DECILES.some((o) => o.v === d))
     : [];
-  const grain = pick(GRAINS.filter((g) => !g.disabled), rawGrain, 'ytd');
-  const options = useMemo(() => periodOptions(grain), [grain]);
-  const period = options.some((o) => o.key === rawPeriod) ? rawPeriod : defaultPeriod(grain);
+  // Cycle bounds come from the objectives sheet; until they load, a cycle has no window.
+  const cyclesRes = useLightdash(Q.cycles);
+  const cycles = useMemo(() => cycleList((cyclesRes.data || []).map((r) => ({
+    code: r[F.cy.code], start: r[F.cy.start], end: r[F.cy.end],
+  }))), [cyclesRes.data]);
 
-  // Switching granularity resets the period to the current one of the new grain.
+  const grain = pick(GRAINS, rawGrain, 'ytd');
+  const options = useMemo(() => periodOptions(grain, new Date(), cycles), [grain, cycles]);
+  const fallback = defaultPeriod(grain, new Date(), cycles);
+  const valid = grain === 'custom' ? parseCustom(rawPeriod) : options.some((o) => o.key === rawPeriod);
+  const period = valid ? rawPeriod : fallback;
+
+  const win = useMemo(() => periodWindow(grain, period, new Date(), cycles), [grain, period, cycles]);
+  const winN1 = useMemo(() => previousYear(win, cycles), [win, cycles]);
+
+  // Switching granularity resets the period to the current one of the new grain; a custom
+  // window starts from the window on screen.
   const setGrain = useCallback((g) => {
     setGrainRaw(g);
-    setPeriod(defaultPeriod(g));
-  }, [setGrainRaw, setPeriod]);
-
-  const win = useMemo(() => periodWindow(grain, period), [grain, period]);
-  const winN1 = useMemo(() => previousYear(win), [win]);
+    setPeriod(g === 'custom' && win ? customKey(win.start, win.end) : defaultPeriod(g, new Date(), cycles));
+  }, [setGrainRaw, setPeriod, win, cycles]);
 
   return {
     page, setPage, canal, setCanal, gamme, setGamme, deciles, setDeciles,
     grain, setGrain, period, setPeriod, periodOptions: options, win, winN1,
+    periodLoading: grain === 'cycle' && cyclesRes.loading,
+    periodError: grain === 'cycle' ? cyclesRes.error : null,
   };
 }

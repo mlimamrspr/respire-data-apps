@@ -10,6 +10,8 @@ export const CU = 'dtm_b2b_pharma_customers_v2';
 export const HI = 'dtm_b2b_pharma_history_v2';
 export const HQ = 'primary_b2b_pharma_hq_objectives';
 export const OP = 'dtm_b2b_pharma_order_packs_v2';
+// Sector objectives joined to the transactions: the only explore carrying the commercial cycle bounds.
+export const CY = 'primary_b2b_pharma_objectives';
 
 export const F = {
   tx: {
@@ -58,6 +60,7 @@ export const F = {
     elite: `${OP}.total_qty_pack_elite`, eliteObj: `${OP}.max_count_obj_pack_elite`,
     is: `${OP}.total_qty_pack_is`, isObj: `${OP}.max_count_obj_pack_is`,
   },
+  cy: { code: `${CY}.code_cycle`, start: `${CY}.dt_start_cycle`, end: `${CY}.dt_end_cycle` },
   hq: {
     month: `${HQ}.dt_month`, team: `${HQ}.type_sales_team`,
     ca: `${HQ}.total_amt_obj_turnover_bt_eur`, caSkin: `${HQ}.total_amt_obj_turnover_skin_bt_eur`,
@@ -88,15 +91,23 @@ const olMetrics = [F.ol.invoiced, F.ol.total];
 const openingMetrics = [F.cu.openings, F.cu.deo, F.cu.skinOpenings];
 const repeatMetrics = [F.tx.invoiced, F.tx.total, F.tx.orders];
 
-// Average per pharmacy of the gaps between repeat orders: one metric per period grain.
+// Average per pharmacy of the gaps between repeat orders: one metric per period grain. A cycle or a
+// custom window has no pharmacy weight in the semantic layer: the plain average of the gaps stands in.
 const GAP_GRAIN = { month: 'month', quarter: 'quarter', ytd: 'year' };
-export const gapMetric = (grain) => `${TX}.avg_pharmacy_duration_since_previous_repeat_order_day_${GAP_GRAIN[grain]}`;
-const byGrain = (build) => Object.fromEntries(Object.keys(GAP_GRAIN).map((g) => [g, build(gapMetric(g))]));
-const delayMetrics = (gap) => [gap, F.tx.gap, F.tx.reordering, F.tx.openingDelay, F.tx.firstRepeats];
+export const hasPharmacyGap = (grain) => grain in GAP_GRAIN;
+export const gapMetric = (grain) => (hasPharmacyGap(grain)
+  ? `${TX}.avg_pharmacy_duration_since_previous_repeat_order_day_${GAP_GRAIN[grain]}`
+  : F.tx.gap);
+const byGrain = (build) => Object.fromEntries(
+  [...Object.keys(GAP_GRAIN), 'cycle', 'custom'].map((g) => [g, build(gapMetric(g))]),
+);
+const delayMetrics = (gap) => [...new Set([gap, F.tx.gap, F.tx.reordering, F.tx.openingDelay, F.tx.firstRepeats])];
 const tfObjMetrics = [F.op.dnObj, F.op.packsObj, F.op.premiumObj, F.op.vipObj, F.op.eliteObj, F.op.isObj];
 const tfPackMetrics = [F.op.packs, F.op.premium, F.op.vip, F.op.elite, F.op.is];
 
 export const Q = {
+  cycles: query(TX).label('Période · Bornes des cycles commerciaux')
+    .dimensions([F.cy.code, F.cy.start, F.cy.end]).limit(50),
   ca: query(TX).label('Synthèse · CA').metrics(caMetrics).limit(1),
   caN1: query(TX).label('Synthèse · CA n-1').metrics(caMetrics).limit(1),
   typology: query(TX).label('Synthèse · CA par typologie')
@@ -140,18 +151,35 @@ export const Q = {
     .dimensions([F.op.tf, F.op.state, F.op.start, F.op.end]).metrics([F.op.dn, ...tfObjMetrics]).limit(50),
   tfPacks: query(OP).label('TF en cours · Packs de la période par TF')
     .dimensions([F.op.tf]).metrics(tfPackMetrics).limit(50),
-  tfPeriodDn: query(TX).label('TF en cours · DN de la période par TF')
-    .dimensions([F.tx.preorderType]).metrics([F.tx.preordering]).limit(100),
+  tfPeriod: query(TX).label('TF en cours · DN et CA de la période par TF (date de commande)')
+    .dimensions([F.tx.preorderType]).metrics([F.tx.preordering, F.tx.total]).limit(100),
+  tfPhaseCa: query(TX).label('TF en cours · CA de la période d’une phase (date de commande)')
+    .metrics([F.tx.total]).limit(1),
   tfStatePacks: query(OP).label('TF en cours · Packs de la période par phase')
     .dimensions([F.op.state]).metrics([F.op.packs]).limit(5),
   tfStateObjectives: query(OP).label('TF en cours · Objectifs de packs par phase')
     .dimensions([F.op.state]).metrics([F.op.packsObj]).limit(5),
+  tfPastCampaigns: query(OP).label('TF passés · Atterrissage des TF clôturés : DN, packs et objectifs')
+    .dimensions([F.op.tf, F.op.start, F.op.end]).metrics([F.op.dn, ...tfPackMetrics, ...tfObjMetrics]).limit(100),
+  tfPastInvoiced: query(TX).label('TF passés · CA facturé all-time par TF')
+    .dimensions([F.tx.preorderType]).metrics([F.tx.invoiced]).limit(100),
+  tfBilled: query(TX).label('TF passés · CA et commandes TF de l’année').metrics([F.tx.total, F.tx.orders]).limit(1),
+  tfBilledN1: query(TX).label('TF passés · CA et commandes TF n-1').metrics([F.tx.total, F.tx.orders]).limit(1),
+  tfBilledByTf: query(TX).label('TF passés · CA TF de l’année par TF')
+    .dimensions([F.tx.preorderType]).metrics([F.tx.total]).sorts([{ field: F.tx.total, direction: 'desc' }]).limit(100),
 };
 
 // TF followed by the headquarters (an objective in the seed, as on Looker) and not over yet.
 export const TF_OPEN = [
   { field: F.op.followed, operator: 'equals', value: [true] },
   { field: F.op.state, operator: 'notEquals', value: ['done'] },
+];
+
+// Closed TF shown on the TF passés page: none before 2026 (decision of 2026-10-26, A_VALIDER 4.2).
+export const TF_PAST_FROM = '2026-01-01';
+export const TF_DONE = [
+  { field: F.op.state, operator: 'equals', value: ['done'] },
+  { field: F.op.start, operator: 'greaterThanOrEqual', value: [TF_PAST_FROM] },
 ];
 
 // Repeat orders: the Réassort typology of the transactions, and its order lines.

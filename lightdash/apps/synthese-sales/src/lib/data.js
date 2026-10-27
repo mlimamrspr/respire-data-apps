@@ -35,13 +35,15 @@ export const status = (...results) => ({
   error: results.find((r) => r.error)?.error ?? null,
 });
 
-// Objectives are monthly, per sales team, and not split by décile: none when a décile is selected.
+// Objectives are monthly, per sales team, and not split by décile: none when a décile is selected,
+// nor on a custom window that cuts a month (A_VALIDER 9.b).
 export function useObjectives({ canal, deciles, win }) {
   const filters = [between(F.hq.month, win.months[0], win.months[1])];
   if (TEAM[canal]) filters.push({ field: F.hq.team, operator: 'equals', value: [TEAM[canal]] });
   const res = useQuery(Q.objectives, HQ, filters);
   const aovRes = useQuery(Q.aovObjectives, HQ, filters);
-  const rows = deciles.length ? [] : res.data;
+  const none = deciles.length > 0 || !win.wholeMonths;
+  const rows = none ? [] : res.data;
   const asOfMonth = `${win.asOf.slice(0, 7)}-01`;
   const isTeam = (t) => (r) => r[F.hq.team] === t;
   const atAsOf = (r) => String(r[F.hq.month]).slice(0, 10) === asOfMonth;
@@ -53,7 +55,7 @@ export function useObjectives({ canal, deciles, win }) {
     // Park objectives are levels: read on the month of the park date.
     level: (field, pred = () => true) => sum(rows, field, (r) => atAsOf(r) && pred(r)),
     // Average of the AOV entered over the months of the window, 0 excluded (A_VALIDER 1.17).
-    aov: (field) => (deciles.length ? null : first(aovRes, field)),
+    aov: (field) => (none ? null : first(aovRes, field)),
     isTeam,
   };
 }
